@@ -58,26 +58,26 @@ export default function CadastrarResiduoPage() {
       const filesArray = Array.from(files)
       const availableSlots = 5 - residuoData.imagens.length
       const filesToProcess = filesArray.slice(0, availableSlots)
-      
+
       if (filesToProcess.length === 0) return
-      
+
       setProcessingImages(true)
       setImageProcessingProgress({ current: 0, total: filesToProcess.length })
-      
+
       const processedImages: File[] = []
-      
+
       for (let i = 0; i < filesToProcess.length; i++) {
         const file = filesToProcess[i]
         setImageProcessingProgress({ current: i + 1, total: filesToProcess.length })
-        
-        // Verificar se é uma imagem
+
+        // Verificar se Ã© uma imagem
         if (!file.type.startsWith('image/')) {
           alert(`Arquivo "${file.name}" não é uma imagem válida`)
           continue
         }
-        
+
         try {
-          // Processar a imagem (otimizar/comprimir se necessário)
+          // Processar a imagem (otimizar/comprimir se necessÃ¡rio)
           const processedFile = await optimizeImage(file)
           processedImages.push(processedFile)
         } catch (error) {
@@ -85,10 +85,10 @@ export default function CadastrarResiduoPage() {
           alert(`Erro ao processar a imagem "${file.name}"`)
         }
       }
-      
+
       setProcessingImages(false)
       setImageProcessingProgress({ current: 0, total: 0 })
-      
+
       // Adicionar as imagens processadas
       if (processedImages.length > 0) {
         setResiduoData((prev) => ({
@@ -123,7 +123,7 @@ export default function CadastrarResiduoPage() {
     }))
   }
 
-  // Função para otimizar imagens automaticamente
+  // FunÃ§Ã£o para otimizar imagens automaticamente
   const optimizeImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       // Validar tipo de arquivo primeiro
@@ -135,46 +135,46 @@ export default function CadastrarResiduoPage() {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       const img = new Image()
-      
+
       img.onload = () => {
         try {
-          // Definir dimensões máximas para manter qualidade
+          // Definir dimensÃµes mÃ¡ximas para manter qualidade
           const MAX_WIDTH = 1920
           const MAX_HEIGHT = 1080
           const MAX_FILE_SIZE = 500 * 1024 * 1024 // 500MB alvo (aumentado)
-          
+
           let { width, height } = img
-          
-          // Redimensionar se necessário, mantendo proporção
+
+          // Redimensionar se necessÃ¡rio, mantendo proporÃ§Ã£o
           if (width > MAX_WIDTH || height > MAX_HEIGHT) {
             const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height)
             width = Math.round(width * ratio)
             height = Math.round(height * ratio)
           }
-          
+
           canvas.width = width
           canvas.height = height
-          
+
           // Desenhar imagem redimensionada
           ctx?.drawImage(img, 0, 0, width, height)
-          
-          // Função para tentar diferentes qualidades
+
+          // FunÃ§Ã£o para tentar diferentes qualidades
           const tryQuality = (quality: number) => {
             canvas.toBlob((blob) => {
               if (blob) {
-                // Se o arquivo resultante é pequeno o suficiente ou qualidade já está muito baixa
+                // Se o arquivo resultante Ã© pequeno o suficiente ou qualidade jÃ¡ estÃ¡ muito baixa
                 if (blob.size <= MAX_FILE_SIZE || quality <= 0.1) {
                   const optimizedFile = new File([blob], file.name, {
                     type: 'image/jpeg',
                     lastModified: Date.now()
                   })
-                  
+
                   console.log(`Imagem otimizada: ${file.name}`)
                   console.log(`Tamanho original: ${(file.size / (1024 * 1024)).toFixed(2)}MB`)
                   console.log(`Tamanho otimizado: ${(blob.size / (1024 * 1024)).toFixed(2)}MB`)
                   console.log(`Dimensões: ${width}x${height}`)
                   console.log(`Qualidade: ${Math.round(quality * 100)}%`)
-                  
+
                   resolve(optimizedFile)
                 } else {
                   // Tentar com qualidade menor
@@ -185,8 +185,8 @@ export default function CadastrarResiduoPage() {
               }
             }, 'image/jpeg', quality)
           }
-          
-          // Começar com qualidade baseada no tamanho original
+
+          // ComeÃ§ar com qualidade baseada no tamanho original
           const initialQuality = file.size > 100 * 1024 * 1024 ? 0.6 : file.size > 20 * 1024 * 1024 ? 0.7 : 0.8
           tryQuality(initialQuality)
         } catch (error) {
@@ -194,9 +194,9 @@ export default function CadastrarResiduoPage() {
           reject(new Error('Erro ao processar imagem'))
         }
       }
-      
+
       img.onerror = () => reject(new Error('Erro ao carregar imagem'))
-      
+
       // Criar URL do objeto de forma segura
       try {
         img.src = URL.createObjectURL(file)
@@ -205,10 +205,6 @@ export default function CadastrarResiduoPage() {
       }
     })
   }
-
-
-  // fileToBase64 removido: não é mais necessário
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,6 +232,7 @@ export default function CadastrarResiduoPage() {
       formData.append("condicoes", residuoData.condicoes);
       formData.append("disponibilidade", residuoData.disponibilidade);
       formData.append("preco", residuoData.preco);
+      formData.append("abertoNegociacao", String(residuoData.abertoNegociacao)); // Incluindo novo campo
       formData.append("empresaId", String(empresaId));
       formData.append("userId", String(userId));
 
@@ -250,7 +247,7 @@ export default function CadastrarResiduoPage() {
 
       if (response.ok) {
         const residuo = await response.json();
-        alert(`Resíduo cadastrado com sucesso! ${residuo.imagensCreated || 0} imagens foram salvas.`);
+        alert(`resíduos cadastrado com sucesso! ${residuo.imagensCreated || 0} imagens foram salvas.`);
         router.push("/my-offers");
       } else {
         let error: unknown = {};
@@ -287,7 +284,7 @@ export default function CadastrarResiduoPage() {
       residuoData.disponibilidade &&
       residuoData.imagens.length >= 1 &&
       residuoData.imagens.length <= 5
-    )
+    );
   }
 
   return (
@@ -315,14 +312,14 @@ export default function CadastrarResiduoPage() {
               <span className="text-teal-700 font-medium">Processando imagens...</span>
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* LAYOUT EM DUAS COLUNAS - Grid principal */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
+
               {/* COLUNA 1 - Campos do formulário (ocupa 2/3 da largura) */}
               <div className="lg:col-span-2 space-y-6">
-                
+
                 {/* LINHA 1: Tipo de resíduo + Quantidade + Unidade */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Tipo de resíduos */}
@@ -400,6 +397,7 @@ export default function CadastrarResiduoPage() {
                     className="w-full h-24 px-3 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder-gray-400"
                     placeholder="Descreva como o resíduo está armazenado, condições ambientais, embalagem..."
                   />
+
                 </div>
 
                 {/* LINHA 4: Disponibilidade (opções em coluna) */}
@@ -493,10 +491,9 @@ export default function CadastrarResiduoPage() {
                 <div className="space-y-3 sticky">
                   <label className="text-gray-700 font-medium">Foto do resíduos</label>
                   <div
-                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                      processingImages ? "border-blue-300 bg-blue-50" :
-                      dragActive ? "border-teal-500 bg-teal-50" : "border-gray-300 bg-gray-50 hover:border-gray-400"
-                    }`}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${processingImages ? "border-blue-300 bg-blue-50" :
+                        dragActive ? "border-teal-500 bg-teal-50" : "border-gray-300 bg-gray-50 hover:border-gray-400"
+                      }`}
                     onDragEnter={processingImages ? undefined : handleDrag}
                     onDragLeave={processingImages ? undefined : handleDrag}
                     onDragOver={processingImages ? undefined : handleDrag}
@@ -526,7 +523,7 @@ export default function CadastrarResiduoPage() {
                       </p>
                     </label>
                   </div>
-                  
+
                   {/* Indicador de progresso do processamento de imagens */}
                   {processingImages && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -537,7 +534,7 @@ export default function CadastrarResiduoPage() {
                             Otimizando... ({imageProcessingProgress.current}/{imageProcessingProgress.total})
                           </p>
                           <div className="w-full bg-blue-200 rounded-full h-1 mt-1">
-                            <div 
+                            <div
                               className="bg-blue-600 h-1 rounded-full transition-all duration-300"
                               style={{ width: `${(imageProcessingProgress.current / imageProcessingProgress.total) * 100}%` }}
                             ></div>
@@ -558,14 +555,14 @@ export default function CadastrarResiduoPage() {
                             alt={`Preview ${index + 1}`}
                             className="w-full h-32 object-cover rounded border"
                           />
-                          
-                          {/* Indicador de otimização */}
+
+
                           <div className="absolute bottom-0.5 left-0.5 bg-green-500 text-white rounded-full p-0.5">
                             <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
-                          
+
                           <button
                             type="button"
                             onClick={() => removeImage(index)}

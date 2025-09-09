@@ -154,6 +154,7 @@ export default function MyOffersPage() {
   // 🆕 VERIFICAR SE HÁ FILTROS ATIVOS
   const temFiltrosAtivos = filtroTipo !== "" || filtroStatus !== ""
 
+
   // 🆕 USAR AS OFERTAS FILTRADAS EM VEZ DAS OFERTAS ORIGINAIS
   const ofertasFiltradas = getOfertasFiltradas()
 
