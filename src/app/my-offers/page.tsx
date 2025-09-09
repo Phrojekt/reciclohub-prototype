@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
-import { Trash2, Pencil, Plus, Eye } from "lucide-react"
+import { Trash2, Pencil, Plus, Eye, Filter, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 
@@ -24,6 +24,12 @@ export default function MyOffersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  
+  // 🆕 NOVOS ESTADOS PARA OS FILTROS
+  const [filtroTipo, setFiltroTipo] = useState<string>("")
+  const [filtroStatus, setFiltroStatus] = useState<string>("")
+  const [mostrarFiltros, setMostrarFiltros] = useState(false)
+  
   const router = useRouter()
 
   useEffect(() => {
@@ -106,6 +112,51 @@ export default function MyOffersPage() {
     }
   }
 
+  // 🆕 FUNÇÃO PARA OBTER TIPOS ÚNICOS DOS RESÍDUOS
+  const getTiposUnicos = () => {
+    const tipos = offers.map(offer => offer.tipoResiduo)
+    return [...new Set(tipos)].sort()
+  }
+
+  // 🆕 FUNÇÃO PARA OBTER STATUS ÚNICOS (baseado na disponibilidade)
+  const getStatusUnicos = () => {
+    const status = offers.map(offer => offer.disponibilidade)
+    return [...new Set(status)].sort()
+  }
+
+  // 🆕 FUNÇÃO PARA FILTRAR AS OFERTAS
+  const getOfertasFiltradas = () => {
+    let ofertasFiltradas = offers
+
+    // Filtro por tipo
+    if (filtroTipo && filtroTipo !== "") {
+      ofertasFiltradas = ofertasFiltradas.filter(offer => 
+        offer.tipoResiduo === filtroTipo
+      )
+    }
+
+    // Filtro por status (disponibilidade)
+    if (filtroStatus && filtroStatus !== "") {
+      ofertasFiltradas = ofertasFiltradas.filter(offer => 
+        offer.disponibilidade === filtroStatus
+      )
+    }
+
+    return ofertasFiltradas
+  }
+
+  // 🆕 FUNÇÃO PARA LIMPAR TODOS OS FILTROS
+  const limparFiltros = () => {
+    setFiltroTipo("")
+    setFiltroStatus("")
+  }
+
+  // 🆕 VERIFICAR SE HÁ FILTROS ATIVOS
+  const temFiltrosAtivos = filtroTipo !== "" || filtroStatus !== ""
+
+  // 🆕 USAR AS OFERTAS FILTRADAS EM VEZ DAS OFERTAS ORIGINAIS
+  const ofertasFiltradas = getOfertasFiltradas()
+
   const handleDelete = async (offerId: string) => {
     const empresaId = localStorage.getItem("empresaId")
     if (!empresaId) return
@@ -175,6 +226,7 @@ export default function MyOffersPage() {
         return disponibilidade
     }
   }
+
   // Componente de imagem com fallback melhorado
   const ImageWithFallback = ({ offer }: { offer: MyOffer }) => {
     const [imageError, setImageError] = useState(false)
@@ -194,7 +246,6 @@ export default function MyOffersPage() {
 
     const imageUrl = offer.imagens[0].url
 
-    // Trocar para <img> puro para depuração
     return (
       <Image
         src={imageUrl}
@@ -220,7 +271,7 @@ export default function MyOffersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen ">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -230,14 +281,94 @@ export default function MyOffersPage() {
               Gerencie seus resíduos cadastrados e visualize propostas recebidas
             </p>
           </div>
-          <button
-            onClick={() => router.push("/residues/register")}
-            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 mt-4 md:mt-0"
-          >
-            <Plus className="w-5 h-5" />
-            Nova Oferta
-          </button>
+          <div className="flex items-center gap-3 mt-4 md:mt-0">
+            {/* 🆕 BOTÃO PARA MOSTRAR/ESCONDER FILTROS */}
+            <button
+              onClick={() => setMostrarFiltros(!mostrarFiltros)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                temFiltrosAtivos || mostrarFiltros
+                  ? 'bg-teal-600 hover:bg-teal-700 text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <Filter className="w-5 h-5" />
+              Filtros
+              {temFiltrosAtivos && (
+                <span className="bg-white text-blue-600 text-xs rounded-full px-2 py-1 font-bold">
+                  {(filtroTipo ? 1 : 0) + (filtroStatus ? 1 : 0)}
+                </span>
+              )}
+            </button>
+            
+            <button
+              onClick={() => router.push("/residues/register")}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Nova Oferta
+            </button>
+          </div>
         </div>
+
+        {/* 🆕 SEÇÃO DE FILTROS */}
+        {mostrarFiltros && (
+          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-gray-900">Filtrar ofertas</h3>
+              {temFiltrosAtivos && (
+                <button
+                  onClick={limparFiltros}
+                  className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  Limpar filtros
+                </button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Filtro por Tipo */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Resíduo
+                </label>
+                <select
+                  value={filtroTipo}
+                  onChange={(e) => setFiltroTipo(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-900 bg-white"
+                  style={{ color: '#111827' }}
+                >
+                  <option value="" style={{ color: '#6b7280' }}>Todos os tipos</option>
+                  {getTiposUnicos().map(tipo => (
+                    <option key={tipo} value={tipo} style={{ color: '#111827', backgroundColor: '#ffffff' }}>
+                      {tipo}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtro por Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  value={filtroStatus}
+                  onChange={(e) => setFiltroStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-900 bg-white"
+                  style={{ color: '#111827' }}
+                >
+                  <option value="" style={{ color: '#6b7280' }}>Todos os status</option>
+                  {getStatusUnicos().map(status => (
+                    <option key={status} value={status} style={{ color: '#111827', backgroundColor: '#ffffff' }}>
+                      {getAvailabilityText(status)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Loading */}
         {loading && (
@@ -292,86 +423,148 @@ export default function MyOffersPage() {
           </div>
         )}
 
+        {/* 🆕 ESTADO VAZIO PARA FILTROS SEM RESULTADOS */}
+        {!loading && !error && offers.length > 0 && ofertasFiltradas.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">
+              <div className="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
+                <Filter className="w-8 h-8" />
+              </div>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Nenhuma oferta encontrada
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Não há ofertas que correspondam aos filtros selecionados
+            </p>
+            <button
+              onClick={limparFiltros}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-medium transition"
+            >
+              Limpar Filtros
+            </button>
+          </div>
+        )}
+
         {/* Offers Grid */}
-        {!loading && !error && offers.length > 0 && (
+        {!loading && !error && ofertasFiltradas.length > 0 && (
           <>
-            <div className="mb-4 text-sm text-gray-600">
-              {offers.length} {offers.length === 1 ? 'oferta cadastrada' : 'ofertas cadastradas'}
+            <div className="mb-4 text-sm text-gray-600 flex items-center justify-between">
+              <span>
+                {/* 🆕 MOSTRAR CONTAGEM FILTRADA */}
+                {temFiltrosAtivos ? (
+                  <>
+                    {ofertasFiltradas.length} de {offers.length} {ofertasFiltradas.length === 1 ? 'oferta encontrada' : 'ofertas encontradas'}
+                  </>
+                ) : (
+                  <>
+                    {offers.length} {offers.length === 1 ? 'oferta cadastrada' : 'ofertas cadastradas'}
+                  </>
+                )}
+              </span>
+              
+              {/* 🆕 INDICADOR DE FILTROS ATIVOS */}
+              {temFiltrosAtivos && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-gray-500">Filtros ativos:</span>
+                  {filtroTipo && (
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                      Tipo: {filtroTipo}
+                    </span>
+                  )}
+                  {filtroStatus && (
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                      Status: {getAvailabilityText(filtroStatus)}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {offers.map((offer) => (
+              {/* 🆕 USAR ofertasFiltradas EM VEZ DE offers */}
+              {ofertasFiltradas.map((offer) => (
                 <div
                   key={offer.id}
-                  className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden transition hover:shadow-md hover:border-teal-200"
-                  style={{ minHeight: 380 }}
+                  className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-teal-300 hover:-translate-y-1"
+                  style={{ minHeight: 420 }}
                 >
                   {/* Image */}
-                  <div className="relative w-full h-40 bg-gray-200 flex items-center justify-center overflow-hidden rounded-t-2xl">
+                  <div className="relative w-full h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
                     <ImageWithFallback offer={offer} />
 
                     {/* Edit button */}
                     <button
                       onClick={() => handleEdit(offer.id)}
-                      className="absolute top-2 right-2 bg-white rounded-full p-2 shadow hover:bg-gray-100 border border-teal-500 transition"
+                      className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white border border-gray-200 transition-all duration-200 hover:scale-105"
                       title="Editar resíduo"
                     >
                       <Pencil className="w-4 h-4 text-teal-600" />
                     </button>
+
+                    {/* Status badge */}
+                    <div className="absolute top-3 left-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium shadow-sm ${getAvailabilityColor(offer.disponibilidade)}`}>
+                        {getAvailabilityText(offer.disponibilidade)}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 flex flex-col justify-between p-5">
-                    <div>
-                      {/* Title and availability */}
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-lg font-bold text-gray-900 line-clamp-1">
-                          {offer.tipoResiduo}
-                        </h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getAvailabilityColor(offer.disponibilidade)}`}>
-                          {getAvailabilityText(offer.disponibilidade)}
-                        </span>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                  <div className="flex-1 flex flex-col p-4">
+                    {/* Header */}
+                    <div className="mb-3">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">
+                        {offer.tipoResiduo}
+                      </h3>
+                      <p className="text-gray-600 text-sm line-clamp-2">
                         {offer.descricao}
                       </p>
+                    </div>
 
-                      {/* Quantity and condition */}
-                      <div className="space-y-1 mb-3">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Quantidade:</span>
-                          <span className="font-medium">{offer.quantidade} {offer.unidade}</span>
+                    {/* Details section */}
+                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-500 block text-xs mb-1">Quantidade</span>
+                          <span className="font-semibold text-gray-800">{offer.quantidade} {offer.unidade}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Condições:</span>
-                          <span className="font-medium line-clamp-1">{offer.condicoes}</span>
+                        <div>
+                          <span className="text-gray-500 block text-xs mb-1">Condições</span>
+                          <span className="font-semibold text-gray-800 line-clamp-1">{offer.condicoes}</span>
                         </div>
                       </div>
+                    </div>
 
+                    {/* Images and proposals info */}
+                    <div className="space-y-2 mb-4">
                       {/* Image count indicator */}
                       {offer.imagens && offer.imagens.length > 1 && (
-                        <div className="flex items-center gap-1 mb-3">
-                          <Eye className="w-3 h-3 text-gray-400" />
-                          <span className="text-xs text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                            <Eye className="w-3 h-3 text-gray-500" />
+                          </div>
+                          <span className="text-xs text-gray-600">
                             +{offer.imagens.length - 1} imagem{offer.imagens.length > 2 ? 's' : ''}
                           </span>
                         </div>
                       )}
 
                       {/* Proposals counter */}
-                      <div className="space-y-1 mb-3">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Eye className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
-                            {offer.propostas} {offer.propostas === 1 ? 'proposta total' : 'propostas totais'}
+                          <div className="w-6 h-6 bg-teal-100 rounded-full flex items-center justify-center">
+                            <Eye className="w-3 h-3 text-teal-600" />
+                          </div>
+                          <span className="text-sm text-gray-700">
+                            {offer.propostas} {offer.propostas === 1 ? 'proposta' : 'propostas'}
                           </span>
                         </div>
+                        
                         {offer.propostasPendentes > 0 && (
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                            <span className="text-sm font-medium text-yellow-600">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                            <span className="text-sm font-medium text-amber-600">
                               {offer.propostasPendentes} pendente{offer.propostasPendentes > 1 ? 's' : ''}
                             </span>
                           </div>
@@ -379,45 +572,47 @@ export default function MyOffersPage() {
                       </div>
                     </div>
 
-                    {/* Footer */}
-                    <div className="space-y-3">
-                      {/* Price */}
-                      <div className="text-center">
-                        <span className="text-teal-600 font-bold text-lg">
-                          {formatPrice(offer.preco, offer.disponibilidade)}
-                        </span>
-                      </div>
+                    {/* Price */}
+                    <div className="text-center mb-4 py-2">
+                      <span className="text-teal-600 font-bold text-xl">
+                        {formatPrice(offer.preco, offer.disponibilidade)}
+                      </span>
+                    </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleViewProposals(offer.id)}
-                          className={`flex-1 text-white text-sm font-medium rounded-lg px-3 py-2 transition flex items-center justify-center gap-1 relative ${offer.propostasPendentes > 0
-                              ? 'bg-yellow-600 hover:bg-yellow-700'
-                              : 'bg-blue-600 hover:bg-blue-700'
-                            }`}
-                        >
-                          <Eye className="w-4 h-4" />
-                          Ver Propostas
-                          {offer.propostasPendentes > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                              {offer.propostasPendentes}
-                            </span>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(offer.id)}
-                          disabled={deletingId === offer.id}
-                          className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg px-3 py-2 transition"
-                          title="Excluir resíduo"
-                        >
-                          {deletingId === offer.id ? (
-                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                          ) : (
+                    {/* Actions - Layout aprimorado */}
+                    <div className="mt-auto space-y-2">
+                      <button
+                        onClick={() => handleViewProposals(offer.id)}
+                        className={`w-full text-sm font-medium rounded-lg px-4 py-3 transition-all duration-200 flex items-center justify-center gap-2 relative ${
+                          offer.propostasPendentes > 0
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+                            : 'bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100'
+                        }`}
+                      >
+                        <Eye className="w-4 h-4" />
+                        Ver Propostas
+                        {offer.propostasPendentes > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-sm">
+                            {offer.propostasPendentes}
+                          </span>
+                        )}
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDelete(offer.id)}
+                        disabled={deletingId === offer.id}
+                        className="w-full bg-gray-50 text-gray-600 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 disabled:opacity-50 text-sm font-medium rounded-lg px-4 py-2 transition-all duration-200 flex items-center justify-center gap-2"
+                        title="Excluir resíduo"
+                      >
+                        {deletingId === offer.id ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full" />
+                        ) : (
+                          <>
                             <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
+                            Excluir
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -14,6 +14,7 @@ export default function CadastrarResiduoPage() {
     condicoes: "",
     disponibilidade: "",
     preco: "",
+    abertoNegociacao: false, // Novo campo adicionado conforme solicitado
     imagens: [] as File[],
   })
   const [dragActive, setDragActive] = useState(false)
@@ -48,7 +49,7 @@ export default function CadastrarResiduoPage() {
     "Unidades por Mês",
   ]
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setResiduoData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -290,8 +291,9 @@ export default function CadastrarResiduoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="min-h-screen ">
+      {/* Container principal com largura maior para acomodar duas colunas */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-4 md:mb-0">
             Cadastrar Novo Resíduo
@@ -305,246 +307,288 @@ export default function CadastrarResiduoPage() {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
+        <div className="bg-white rounded-lg shadow-sm p-6 md:p-8 relative">
+          {/* Loading overlay mantido igual */}
           {isLoading && (
             <div className="absolute inset-0 bg-white bg-opacity-70 flex flex-col items-center justify-center z-50 rounded-lg">
               <Loader2 className="animate-spin w-12 h-12 text-teal-600 mb-2" />
               <span className="text-teal-700 font-medium">Processando imagens...</span>
             </div>
           )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Tipo de Resíduo */}
-            <div className="space-y-2">
-              <label htmlFor="tipoResiduo" className="text-gray-700 font-medium">
-                Tipos de resíduos
-              </label>
-              <select
-                id="tipoResiduo"
-                value={residuoData.tipoResiduo}
-                onChange={(e) => handleInputChange("tipoResiduo", e.target.value)}
-                className="w-full text-gray-400 bg-gray-100 border border-[#00A2AA]/50 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00A2AA] focus:border-[#00A2AA]"
-              >
-                <option value="">Selecione o tipo de resíduo</option>
-                {tiposResiduos.map((tipo) => (
-                  <option key={tipo} value={tipo}>
-                    {tipo}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Descrição */}
-            <div className="space-y-2">
-              <label htmlFor="descricao" className="text-gray-700 font-medium">
-                Descrição Detalhada do Resíduo
-              </label>
-              <textarea
-                id="descricao"
-                value={residuoData.descricao}
-                onChange={(e) => handleInputChange("descricao", e.target.value)}
-                className="w-full h-32 px-3 py-2 bg-gray-100 border border-[#00A2AA]/50 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-[#00A2AA] focus:border-[#00A2AA] placeholder-gray-400 text-gray-400"
-                placeholder="Descreva detalhadamente o resíduo, suas características, origem, composição..."
-              />
-            </div>
-
-            {/* Quantidade */}
-            <div className="space-y-2">
-              <label className="text-gray-700 font-medium">Quantidade Gerada (Aproximada)</label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input
-                  type="number"
-                  value={residuoData.quantidade}
-                  onChange={(e) => handleInputChange("quantidade", e.target.value)}
-                  className="bg-gray-100 border text-gray-400 border-[#00A2AA]/50 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00A2AA] focus:border-[#00A2AA] placeholder-gray-400"
-                  placeholder="Ex: 500"
-                />
-                <select
-                  value={residuoData.unidade}
-                  onChange={(e) => handleInputChange("unidade", e.target.value)}
-                  className="bg-gray-100 border text-gray-400 border-[#00A2AA]/50 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00A2AA] focus:border-[#00A2AA]"
-                >
-                  {unidades.map((unidade) => (
-                    <option key={unidade} value={unidade}>
-                      {unidade}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Condições de Armazenamento */}
-            <div className="space-y-2">
-              <label htmlFor="condicoes" className="text-gray-700 font-medium">
-                Condições do Armazenamento
-              </label>
-              <textarea
-                id="condicoes"
-                value={residuoData.condicoes}
-                onChange={(e) => handleInputChange("condicoes", e.target.value)}
-                className="w-full h-24 px-3 py-2 bg-gray-100 text-gray-400 border border-[#00A2AA]/50 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-[#00A2AA] focus:border-[#00A2AA] placeholder-gray-400"
-                placeholder="Descreva como o resíduo está armazenado, condições ambientais, embalagem..."
-              />
-            </div>
-
-            {/* Disponibilidade */}
-            <div className="space-y-3">
-              <label className="text-gray-700 font-medium">Disponibilidade para</label>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id="retirada"
-                    name="disponibilidade"
-                    value="retirada"
-                    checked={residuoData.disponibilidade === "retirada"}
-                    onChange={(e) => handleInputChange("disponibilidade", e.target.value)}
-                  />
-                  <label htmlFor="retirada" className="text-gray-700 cursor-pointer">
-                    Retirada por Terceiro
-                  </label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id="doacao"
-                    name="disponibilidade"
-                    value="doacao"
-                    checked={residuoData.disponibilidade === "doacao"}
-                    onChange={(e) => handleInputChange("disponibilidade", e.target.value)}
-                  />
-                  <label htmlFor="doacao" className="text-gray-700 cursor-pointer">
-                    Doação
-                  </label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id="venda"
-                    name="disponibilidade"
-                    value="venda"
-                    checked={residuoData.disponibilidade === "venda"}
-                    onChange={(e) => handleInputChange("disponibilidade", e.target.value)}
-                  />
-                  <label htmlFor="venda" className="text-gray-700 cursor-pointer">
-                    Venda (Especificar Preço Abaixo)
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Preço (Opcional) */}
-            <div className="space-y-2">
-              <label htmlFor="preco" className="text-gray-700 font-medium">
-                Preço (Opcional)
-              </label>
-              <input
-                id="preco"
-                type="text"
-                value={residuoData.preco}
-                onChange={(e) => handleInputChange("preco", e.target.value)}
-                className="bg-gray-100 border border-[#00A2AA]/50 rounded px-3 py-2 focus:outline-none focus:ring-2 text-gray-400 focus:ring-[#00A2AA] focus:border-[#00A2AA] placeholder-gray-400"
-                placeholder="Ex: R$ 2,50 por kg"
-                disabled={residuoData.disponibilidade !== "venda"}
-              />
-            </div>
-
-            {/* Upload de Imagens */}
-            <div className="space-y-3">
-              <label className="text-gray-700 font-medium">Foto do Resíduo</label>
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  processingImages ? "border-blue-300 bg-blue-50" :
-                  dragActive ? "border-teal-500 bg-teal-50" : "border-gray-300 bg-gray-50 hover:border-gray-400"
-                }`}
-                onDragEnter={processingImages ? undefined : handleDrag}
-                onDragLeave={processingImages ? undefined : handleDrag}
-                onDragOver={processingImages ? undefined : handleDrag}
-                onDrop={processingImages ? undefined : handleDrop}
-              >
-                <input
-                  type="file"
-                  id="images"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload(e.target.files)}
-                  className="hidden"
-                  disabled={processingImages}
-                />
-                <label htmlFor="images" className={processingImages ? "cursor-not-allowed" : "cursor-pointer"}>
-                  {processingImages ? (
-                    <Loader2 className="w-12 h-12 text-blue-400 mx-auto mb-3 animate-spin" />
-                  ) : (
-                    <Camera className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  )}
-                  <p className="text-gray-500">
-                    {processingImages ? "Processando imagens..." : "Clique ou arraste imagem para inserir"}
-                  </p>
-                  <p className="text-sm text-gray-400 mt-1">Mínimo 1 e máximo 5 imagens</p>
-                  <p className="text-xs text-gray-400">
-                    Imagens suportadas: JPEG, PNG, etc. (até 500MB cada).<br />
-                    A conversão para base64 é feita automaticamente pela plataforma.
-                  </p>
-                </label>
-              </div>
+            {/* LAYOUT EM DUAS COLUNAS - Grid principal */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               
-              {/* Indicador de progresso do processamento de imagens */}
-              {processingImages && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center space-x-3">
-                    <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-blue-800">
-                        Otimizando imagens... ({imageProcessingProgress.current}/{imageProcessingProgress.total})
-                      </p>
-                      <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(imageProcessingProgress.current / imageProcessingProgress.total) * 100}%` }}
-                        ></div>
-                      </div>
+              {/* COLUNA 1 - Campos do formulário (ocupa 2/3 da largura) */}
+              <div className="lg:col-span-2 space-y-6">
+                
+                {/* LINHA 1: Tipo de resíduo + Quantidade + Unidade */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Tipo de resíduos */}
+                  <div className="md:col-span-1 space-y-2">
+                    <label htmlFor="tipoResiduo" className="text-gray-700 font-medium">
+                      Tipo de resíduos*
+                    </label>
+                    <select
+                      id="tipoResiduo"
+                      value={residuoData.tipoResiduo}
+                      onChange={(e) => handleInputChange("tipoResiduo", e.target.value)}
+                      className="w-full text-gray-700 bg-gray-100 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      <option value="" className="text-gray-400">Selecione o tipo</option>
+                      {tiposResiduos.map((tipo) => (
+                        <option key={tipo} value={tipo} className="text-gray-700">
+                          {tipo}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Quantidade */}
+                  <div className="space-y-2">
+                    <label className="text-gray-700 font-medium">Quantidade*</label>
+                    <input
+                      type="number"
+                      value={residuoData.quantidade}
+                      onChange={(e) => handleInputChange("quantidade", e.target.value)}
+                      className="w-full bg-gray-100 border text-gray-700 border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-400"
+                      placeholder="Ex: 500"
+                    />
+                  </div>
+
+                  {/* Unidade */}
+                  <div className="space-y-2">
+                    <label className="text-gray-700 font-medium">Unidade*</label>
+                    <select
+                      value={residuoData.unidade}
+                      onChange={(e) => handleInputChange("unidade", e.target.value)}
+                      className="w-full bg-gray-100 border text-gray-700 border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      {unidades.map((unidade) => (
+                        <option key={unidade} value={unidade}>
+                          {unidade}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* LINHA 2: Descrição (largura total) */}
+                <div className="space-y-2">
+                  <label htmlFor="descricao" className="text-gray-700 font-medium">
+                    Descrição Detalhada do resíduos*
+                  </label>
+                  <textarea
+                    id="descricao"
+                    value={residuoData.descricao}
+                    onChange={(e) => handleInputChange("descricao", e.target.value)}
+                    className="w-full h-32 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder-gray-400 text-gray-700"
+                    placeholder="Descreva detalhadamente o resíduo, suas características, origem, composição..."
+                  />
+                </div>
+
+                {/* LINHA 3: Condições do Armazenamento (largura total) */}
+                <div className="space-y-2">
+                  <label htmlFor="condicoes" className="text-gray-700 font-medium">
+                    Condições do Armazenamento*
+                  </label>
+                  <textarea
+                    id="condicoes"
+                    value={residuoData.condicoes}
+                    onChange={(e) => handleInputChange("condicoes", e.target.value)}
+                    className="w-full h-24 px-3 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder-gray-400"
+                    placeholder="Descreva como o resíduo está armazenado, condições ambientais, embalagem..."
+                  />
+                </div>
+
+                {/* LINHA 4: Disponibilidade (opções em coluna) */}
+                <div className="space-y-3">
+                  <label className="text-gray-700 font-medium">Disponibilidade para*</label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="retirada"
+                        name="disponibilidade"
+                        value="retirada"
+                        checked={residuoData.disponibilidade === "retirada"}
+                        onChange={(e) => handleInputChange("disponibilidade", e.target.value)}
+                        className="text-teal-600 focus:ring-teal-500"
+                      />
+                      <label htmlFor="retirada" className="text-gray-700 cursor-pointer">
+                        Retirada por Terceiro
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="doacao"
+                        name="disponibilidade"
+                        value="doacao"
+                        checked={residuoData.disponibilidade === "doacao"}
+                        onChange={(e) => handleInputChange("disponibilidade", e.target.value)}
+                        className="text-teal-600 focus:ring-teal-500"
+                      />
+                      <label htmlFor="doacao" className="text-gray-700 cursor-pointer">
+                        Doação
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="venda"
+                        name="disponibilidade"
+                        value="venda"
+                        checked={residuoData.disponibilidade === "venda"}
+                        onChange={(e) => handleInputChange("disponibilidade", e.target.value)}
+                        className="text-teal-600 focus:ring-teal-500"
+                      />
+                      <label htmlFor="venda" className="text-gray-700 cursor-pointer">
+                        Venda (Especificar Preço Abaixo)
+                      </label>
                     </div>
                   </div>
                 </div>
-              )}
-              {residuoData.imagens.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  {residuoData.imagens.map((image, index) => (
-                    <div key={index} className="relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={URL.createObjectURL(image)}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-20 object-cover rounded-lg border"
-                      />
-                      
-                      {/* Indicador de otimização */}
-                      <div className="absolute bottom-1 left-1 bg-green-500 text-white rounded-full p-1">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+
+                {/* LINHA 5: Preço (input abaixo do label) */}
+                <div className="space-y-2">
+                  <label htmlFor="preco" className="text-gray-700 font-medium">
+                    Preço {residuoData.disponibilidade !== "venda" && "(Opcional)"}
+                  </label>
+                  <input
+                    id="preco"
+                    type="text"
+                    value={residuoData.preco}
+                    onChange={(e) => handleInputChange("preco", e.target.value)}
+                    className="w-full bg-gray-100 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 text-gray-700 focus:ring-teal-500 placeholder-gray-400 disabled:bg-gray-200 disabled:text-gray-400"
+                    placeholder="Ex: R$ 2,50 por kg"
+                    disabled={residuoData.disponibilidade !== "venda"}
+                  />
                 </div>
-              )}
+
+                {/* LINHA 6: Aberto a negociação (checkbox/switch) */}
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id="abertoNegociacao"
+                      checked={residuoData.abertoNegociacao}
+                      onChange={(e) => handleInputChange("abertoNegociacao", e.target.checked)}
+                      className="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 rounded focus:ring-teal-500 focus:ring-2"
+                    />
+                    <label htmlFor="abertoNegociacao" className="text-gray-700 font-medium cursor-pointer">
+                      Aberto a negociação
+                    </label>
+                  </div>
+                  <p className="text-sm text-gray-500 ml-7">
+                    Marque esta opção se estiver disposto a negociar o preço ou condições
+                  </p>
+                </div>
+
+              </div>
+
+              {/* COLUNA 2 - Upload de imagens (ocupa 1/3 da largura) */}
+              <div className="lg:col-span-1">
+                <div className="space-y-3 sticky">
+                  <label className="text-gray-700 font-medium">Foto do resíduos</label>
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      processingImages ? "border-blue-300 bg-blue-50" :
+                      dragActive ? "border-teal-500 bg-teal-50" : "border-gray-300 bg-gray-50 hover:border-gray-400"
+                    }`}
+                    onDragEnter={processingImages ? undefined : handleDrag}
+                    onDragLeave={processingImages ? undefined : handleDrag}
+                    onDragOver={processingImages ? undefined : handleDrag}
+                    onDrop={processingImages ? undefined : handleDrop}
+                  >
+                    <input
+                      type="file"
+                      id="images"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e.target.files)}
+                      className="hidden"
+                      disabled={processingImages}
+                    />
+                    <label htmlFor="images" className={processingImages ? "cursor-not-allowed" : "cursor-pointer"}>
+                      {processingImages ? (
+                        <Loader2 className="w-10 h-10 text-blue-400 mx-auto mb-3 animate-spin" />
+                      ) : (
+                        <Camera className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                      )}
+                      <p className="text-gray-500 text-sm">
+                        {processingImages ? "Processando..." : "Clique ou arraste imagem"}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">Mínimo 1 e máximo 5 imagens</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        JPEG, PNG (até 500MB cada)
+                      </p>
+                    </label>
+                  </div>
+                  
+                  {/* Indicador de progresso do processamento de imagens */}
+                  {processingImages && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                        <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                        <div className="flex-1">
+                          <p className="text-xs font-medium text-blue-800">
+                            Otimizando... ({imageProcessingProgress.current}/{imageProcessingProgress.total})
+                          </p>
+                          <div className="w-full bg-blue-200 rounded-full h-1 mt-1">
+                            <div 
+                              className="bg-blue-600 h-1 rounded-full transition-all duration-300"
+                              style={{ width: `${(imageProcessingProgress.current / imageProcessingProgress.total) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Preview das imagens */}
+                  {residuoData.imagens.length > 0 && (
+                    <div className="grid grid-cols-1 gap-3">
+                      {residuoData.imagens.map((image, index) => (
+                        <div key={index} className="relative">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-32 object-cover rounded border"
+                          />
+                          
+                          {/* Indicador de otimização */}
+                          <div className="absolute bottom-0.5 left-0.5 bg-green-500 text-white rounded-full p-0.5">
+                            <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 text-xs"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="pt-6 flex justify-end">
+            {/* Submit Button - Largura total */}
+            <div className="pt-6 flex justify-end border-t border-gray-200">
               <button
                 type="submit"
                 disabled={!isFormValid()}
-                className="bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200"
+                className="bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
               >
-                Ofertar
+                {isLoading ? "Processando..." : "Ofertar"}
               </button>
             </div>
           </form>

@@ -96,7 +96,7 @@ export default function EditResiduePage() {
               type="text"
               value={formData.tipoResiduo}
               onChange={e => handleChange("tipoResiduo", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-[#00A2AA]/50 rounded-lg focus:border-[#00A2AA] focus:ring-0 bg-white text-gray-900 placeholder-gray-400"
+              className="w-full px-4 py-3 border-2 border-teal-400 rounded-lg focus:border-teal-600 focus:ring-0 bg-white text-gray-900 placeholder-gray-400"
               placeholder="Tipo de resíduo"
               required
             />
@@ -106,7 +106,7 @@ export default function EditResiduePage() {
             <textarea
               value={formData.descricao}
               onChange={e => handleChange("descricao", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-[#00A2AA]/50 rounded-lg focus:border-[#00A2AA] focus:ring-0 bg-white text-gray-900 placeholder-gray-400 h-24 resize-none"
+              className="w-full px-4 py-3 border-2 border-teal-400 rounded-lg focus:border-teal-600 focus:ring-0 bg-white text-gray-900 placeholder-gray-400 h-24 resize-none"
               placeholder="Descrição do resíduo"
               required
             />
@@ -117,7 +117,7 @@ export default function EditResiduePage() {
               type="number"
               value={formData.quantidade}
               onChange={e => handleChange("quantidade", Number(e.target.value))}
-              className="w-full px-4 py-3 border-2 border-[#00A2AA]/50 rounded-lg focus:border-[#00A2AA] focus:ring-0 bg-white text-gray-900 placeholder-gray-400"
+              className="w-full px-4 py-3 border-2 border-teal-400 rounded-lg focus:border-teal-600 focus:ring-0 bg-white text-gray-900 placeholder-gray-400"
               placeholder="Quantidade"
               required
               min={0}
@@ -129,7 +129,7 @@ export default function EditResiduePage() {
               type="text"
               value={formData.unidade}
               onChange={e => handleChange("unidade", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-[#00A2AA]/50 rounded-lg focus:border-[#00A2AA] focus:ring-0 bg-white text-gray-900 placeholder-gray-400"
+              className="w-full px-4 py-3 border-2 border-teal-400 rounded-lg focus:border-teal-600 focus:ring-0 bg-white text-gray-900 placeholder-gray-400"
               placeholder="Ex: kg, tonelada"
               required
             />
@@ -139,7 +139,7 @@ export default function EditResiduePage() {
             <textarea
               value={formData.condicoes}
               onChange={e => handleChange("condicoes", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-[#00A2AA]/50 rounded-lg focus:border-[#00A2AA] focus:ring-0 bg-white text-gray-900 placeholder-gray-400 h-20 resize-none"
+              className="w-full px-4 py-3 border-2 border-teal-400 rounded-lg focus:border-teal-600 focus:ring-0 bg-white text-gray-900 placeholder-gray-400 h-20 resize-none"
               placeholder="Condições de armazenamento"
               required
             />
@@ -149,7 +149,7 @@ export default function EditResiduePage() {
             <select
               value={formData.disponibilidade}
               onChange={e => handleChange("disponibilidade", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-[#00A2AA]/50 rounded-lg focus:border-[#00A2AA] focus:ring-0 bg-white text-gray-900"
+              className="w-full px-4 py-3 border-2 border-teal-400 rounded-lg focus:border-teal-600 focus:ring-0 bg-white text-gray-900"
               required
             >
               <option value="">Selecione</option>
@@ -164,7 +164,7 @@ export default function EditResiduePage() {
               type="text"
               value={formData.preco}
               onChange={e => handleChange("preco", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-[#00A2AA]/50 rounded-lg focus:border-[#00A2AA] focus:ring-0 bg-white text-gray-900 placeholder-gray-400"
+              className="w-full px-4 py-3 border-2 border-teal-400 rounded-lg focus:border-teal-600 focus:ring-0 bg-white text-gray-900 placeholder-gray-400"
               placeholder="Ex: R$ 1,80/kg"
               disabled={formData.disponibilidade !== "venda"}
             />
