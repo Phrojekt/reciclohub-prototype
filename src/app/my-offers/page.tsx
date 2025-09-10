@@ -1,5 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
+import { fetchJsonWithTimeout } from "@/lib/fetchWithTimeout"
+import { getCache, setCache } from "@/lib/cache"
 import { Trash2, Pencil, Plus, Eye, Filter, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -48,56 +50,73 @@ export default function MyOffersPage() {
       }
 
       console.log("Fazendo requisição para empresaId:", empresaId)
-      const response = await fetch(`/actions/api/residues/my-residues?empresaId=${empresaId}`)
-
-      console.log("Response status:", response.status)
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      const cacheKey = `my_offers_${empresaId}`
+  let data: unknown = null
+      try {
+        data = await fetchJsonWithTimeout(`/actions/api/residues/my-residues?empresaId=${empresaId}`, { timeout: 8000, retries: 2 })
+        setCache(cacheKey, data)
+        console.log("Response data received, processing...")
+      } catch (err) {
+        console.warn('Falha ao buscar ofertas, tentando cache...', err)
+        const cached = getCache<unknown>(cacheKey)
+        if (
+          cached &&
+          (Array.isArray(cached.value) ||
+            (cached.value &&
+              typeof cached.value === 'object' &&
+              Array.isArray((cached.value as Record<string, unknown>).data)))
+        ) {
+          data = Array.isArray(cached.value)
+            ? cached.value
+            : (cached.value as Record<string, unknown>).data
+          console.log('Usando cache para ofertas')
+        } else {
+          throw err
+        }
       }
 
-      const data = await response.json()
-      console.log("Response data received, processing...")
+      // Normalize data shape into offers array or error
+      if (data && typeof data === 'object') {
+        const d = data as Record<string, unknown>
+        // empty object check
+        if (Object.keys(d).length === 0) {
+          console.warn("Received empty object from API")
+          setError("A API retornou uma resposta vazia. Verifique se o endpoint está funcionando corretamente.")
+          setOffers([])
+          return
+        }
 
-      // Check if data is empty object
-      if (typeof data === 'object' && Object.keys(data).length === 0) {
-        console.warn("Received empty object from API")
-        setError("A API retornou uma resposta vazia. Verifique se o endpoint está funcionando corretamente.")
-        setOffers([])
-        return
-      }
-
-      if (data.success && Array.isArray(data.data)) {
-        // Processar as ofertas para validar imagens
-        const processedOffers = data.data.map((offer: MyOffer) => ({
-          ...offer,
-          imagens: offer.imagens.filter(img => {
-            // Filtrar imagens válidas
-            if (!img.url || img.url.trim() === '') {
-              console.warn(`Imagem vazia encontrada no resíduo ${offer.id}`)
-              return false
-            }
-
-            // Verificar se é base64 válido
-            if (img.url.startsWith('data:image/')) {
-              const base64Part = img.url.split(',')[1]
-              if (!base64Part || base64Part.length < 100) {
-                console.warn(`Base64 muito curto no resíduo ${offer.id}:`, img.url.substring(0, 100))
+        if (d.success && Array.isArray(d.data)) {
+          const arr = d.data as unknown as MyOffer[]
+          const processedOffers = arr.map((offer: MyOffer) => ({
+            ...offer,
+            imagens: offer.imagens.filter(img => {
+              if (!img.url || img.url.trim() === '') {
+                console.warn(`Imagem vazia encontrada no resíduo ${offer.id}`)
                 return false
               }
-            }
+              if (img.url.startsWith('data:image/')) {
+                const base64Part = img.url.split(',')[1]
+                if (!base64Part || base64Part.length < 100) {
+                  console.warn(`Base64 muito curto no resíduo ${offer.id}:`, img.url.substring(0, 100))
+                  return false
+                }
+              }
+              return true
+            })
+          }))
+          console.log(`✅ Processadas ${processedOffers.length} ofertas com imagens válidas`)
+          setOffers(processedOffers)
+          return
+        }
+      }
 
-            return true
-          })
-        }))
-
-        console.log(`✅ Processadas ${processedOffers.length} ofertas com imagens válidas`)
-        setOffers(processedOffers)
-      } else if (Array.isArray(data)) {
+      if (Array.isArray(data)) {
         console.log("Data is directly an array, using as offers")
-        setOffers(data)
+        setOffers(data as MyOffer[])
       } else {
-        const errorMessage = data.error || data.message || `Formato de resposta inesperado.`
+        const d = (data && typeof data === 'object') ? data as Record<string, unknown> : undefined
+        const errorMessage = d ? (String(d.error ?? d.message) || `Formato de resposta inesperado.`) : `Formato de resposta inesperado.`
         console.error("Erro ao carregar ofertas:", errorMessage)
         setError(errorMessage)
         setOffers([])
@@ -272,18 +291,16 @@ export default function MyOffersPage() {
   }
 
   return (
-    <div className="min-h-screen ">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="min-h-screen mt-8">
+      <div className="max-w-7xl mx-auto px-12 py-12 bg-white border rounded-xl">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Minhas Ofertas</h1>
             <p className="text-gray-600">
               Gerencie seus resíduos cadastrados e visualize propostas recebidas
             </p>
           </div>
           <div className="flex items-center gap-3 mt-4 md:mt-0">
-            {/* 🆕 BOTÃO PARA MOSTRAR/ESCONDER FILTROS */}
             <button
               onClick={() => setMostrarFiltros(!mostrarFiltros)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
@@ -371,10 +388,66 @@ export default function MyOffersPage() {
           </div>
         )}
 
-        {/* Loading */}
+        {/* Loading: skeleton cards matching real card proportions */}
         {loading && (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-teal-300 hover:-translate-y-1"
+                style={{ minHeight: 420 }}
+              >
+                {/* image placeholder */}
+                <div className="relative w-full h-40 bg-gray-200 flex items-center justify-center overflow-hidden animate-pulse">
+                  <div className="w-full h-full bg-gray-100" />
+                </div>
+
+                {/* content placeholder */}
+                <div className="flex-1 flex flex-col p-4">
+                  <div className="mb-3">
+                    <div className="h-6 bg-gray-100 rounded w-3/4 mb-1 animate-pulse" />
+                    <div className="h-3 bg-gray-100 rounded w-full mb-2 animate-pulse" />
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <div className="h-3 bg-gray-100 rounded w-3/4 mb-1 animate-pulse" />
+                        <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse" />
+                      </div>
+                      <div>
+                        <div className="h-3 bg-gray-100 rounded w-3/4 mb-1 animate-pulse" />
+                        <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-gray-200 rounded-full animate-pulse" />
+                      <div className="h-3 bg-gray-100 rounded w-1/3 animate-pulse" />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-gray-100 rounded-full animate-pulse" />
+                        <div className="h-3 bg-gray-100 rounded w-1/4 animate-pulse" />
+                      </div>
+                      <div className="h-3 bg-gray-100 rounded w-1/6 animate-pulse" />
+                    </div>
+                  </div>
+
+                  <div className="text-center mb-4 py-2">
+                    <div className="h-8 bg-gray-100 rounded w-1/2 mx-auto animate-pulse" />
+                  </div>
+
+                  <div className="mt-auto space-y-2">
+                    <div className="h-12 bg-gray-100 rounded-lg w-full animate-pulse" />
+                    <div className="h-12 bg-gray-100 rounded-lg w-full animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

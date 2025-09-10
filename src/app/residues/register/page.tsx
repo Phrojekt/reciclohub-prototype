@@ -288,9 +288,9 @@ export default function CadastrarResiduoPage() {
   }
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen mt-8">
       {/* Container principal com largura maior para acomodar duas colunas */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-12 py-12 bg-white border rounded-xl">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-4 md:mb-0">
             Cadastrar Novo Resíduo
@@ -304,10 +304,10 @@ export default function CadastrarResiduoPage() {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 md:p-8 relative">
+        <div>
           {/* Loading overlay mantido igual */}
           {isLoading && (
-            <div className="absolute inset-0 bg-white bg-opacity-70 flex flex-col items-center justify-center z-50 rounded-lg">
+            <div className="absolute inset-0  flex flex-col items-center justify-center z-50 rounded-lg">
               <Loader2 className="animate-spin w-12 h-12 text-teal-600 mb-2" />
               <span className="text-teal-700 font-medium">Processando imagens...</span>
             </div>

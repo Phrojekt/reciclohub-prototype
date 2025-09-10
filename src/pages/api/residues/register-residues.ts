@@ -119,18 +119,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const socketWithIO = res.socket as unknown as SocketWithIO;
       const io: IOServer | undefined = socketWithIO.server.io;
       if (io) {
-        io.emit("residuo-registrado", {
+        io.emit("data-updated", {
+          resource: "residuo",
+          action: "created",
           id: residuo.id,
-          tipoResiduo: residuo.tipoResiduo,
-          descricao: residuo.descricao,
-          quantidade: residuo.quantidade,
-          unidade: residuo.unidade,
-          condicoes: residuo.condicoes,
-          disponibilidade: residuo.disponibilidade,
-          preco: residuo.preco,
-          empresaId: residuo.empresaId,
-          userId: residuo.userId,
-          imagens: imagensCriadas.map(img => ({ id: img.id, url: img.url })),
+          payload: {
+            id: residuo.id,
+            tipoResiduo: residuo.tipoResiduo,
+            descricao: residuo.descricao,
+            quantidade: residuo.quantidade,
+            unidade: residuo.unidade,
+            condicoes: residuo.condicoes,
+            disponibilidade: residuo.disponibilidade,
+            preco: residuo.preco,
+            empresaId: residuo.empresaId,
+            userId: residuo.userId,
+            imagens: imagensCriadas.map(img => ({ id: img.id, url: img.url })),
+          }
         });
       }
       return res.status(201).json({

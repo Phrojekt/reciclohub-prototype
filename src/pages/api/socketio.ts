@@ -34,20 +34,34 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       socket.on(
         "message",
         async ({ matchId, message }: { matchId: string; message: { id: number; sender: string; content: string; timestamp: string; matchId?: string; senderId: number } }) => {
-          // Persistir mensagem no banco
-          try {
-            await prisma.chatMessage.create({
-              data: {
-                matchId: Number(matchId),
-                senderId: message.senderId,
-                content: message.content,
-                timestamp: new Date(),
-              }
-            })
-          } catch {
-            // Opcional: log de erro
-          }
-          io?.to(matchId).emit("message", message)
+            // Persistir mensagem no banco e emitir evento padronizado
+            try {
+              const created = await prisma.chatMessage.create({
+                data: {
+                  matchId: Number(matchId),
+                  senderId: message.senderId,
+                  content: message.content,
+                  timestamp: new Date(),
+                }
+              })
+              // Emit standardized intermediary event to inform clients to update caches
+              io?.to(matchId).emit("data-updated", {
+                resource: "chatMessage",
+                action: "created",
+                id: created.id,
+                payload: {
+                  id: created.id,
+                  matchId: created.matchId,
+                  senderId: created.senderId,
+                  content: created.content,
+                  timestamp: created.timestamp,
+                }
+              })
+              // Also emit the original 'message' for real-time chat listeners
+              io?.to(matchId).emit("message", { ...message, id: created.id, timestamp: created.timestamp })
+            } catch (err) {
+              console.error("Failed to persist chat message:", err)
+            }
         }
       )
     })

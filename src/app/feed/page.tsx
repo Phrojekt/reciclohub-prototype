@@ -1,12 +1,13 @@
 "use client"
 import { Search } from "lucide-react"
-import { useState, useEffect, useCallback } from "react"
-import io from "socket.io-client"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { getSocket, onDataUpdated } from "@/lib/socket"
+import { getCache, setCache, isStale } from "@/lib/cache"
 import { ResiduoService, type Residuo } from "@/services/residuoService"
 import { ProposalModal } from "@/app/modals/proposal"
 
 
-let socket: ReturnType<typeof io> | null = null;
+let socket: ReturnType<typeof getSocket> | null = null
 
 // ========================================
 // NOVO: Interface para as métricas do dashboard
@@ -40,6 +41,9 @@ export default function FeedPage() {
   const [selectedCity, setSelectedCity] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  // Simple in-memory cache reference to avoid repeated parsing
+  const cacheKey = "recicloh_residuos_cache_v1"
+  const inMemoryCacheRef = useRef<Residuo[] | null>(null)
 
   // Estados para o modal de proposta
   const [showProposalModal, setShowProposalModal] = useState(false)
@@ -77,16 +81,6 @@ export default function FeedPage() {
     };
   };
 
-  // ========================================
-  // NOVO: Função para formatar valores monetários
-  // ========================================
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0
-    }).format(value);
-  };
 
   // Carregar resíduos (função original mantida intacta)
   const loadResiduos = useCallback(async () => {
@@ -115,7 +109,24 @@ export default function FeedPage() {
   }, [currentPage])
 
   useEffect(() => {
-    loadResiduos()
+    // Try to hydrate from cache first and revalidate in background
+    try {
+      const cached = getCache<Residuo[]>(cacheKey)
+      if (cached && cached.value) {
+        inMemoryCacheRef.current = cached.value
+        setResiduos(cached.value.slice((currentPage - 1) * 9, currentPage * 9))
+        setLoading(false)
+        // Background revalidate if stale (>30s)
+        if (isStale(cacheKey, 30 * 1000)) {
+          loadResiduos()
+        }
+      } else {
+        loadResiduos()
+      }
+    } catch {
+      // Fallback to network
+      loadResiduos()
+    }
 
     // ========================================
     // NOVO: Carregar métricas fixas apenas uma vez
@@ -128,33 +139,48 @@ export default function FeedPage() {
 
   // Atualização instantânea via Socket.IO 
   useEffect(() => {
-    if (!socket) {
-      socket = io(); // Usa a URL padrão do backend, ajuste se necessário
-    }
-    const handleResiduoRegistrado = (novoResiduo: Residuo) => {
-      setResiduos(prev => {
-        // Evita duplicatas
-        if (prev.some(r => r.id === novoResiduo.id)) return prev;
-        // Só adiciona se estiver na primeira página
-        if (currentPage === 1) {
-          const novaLista = [novoResiduo, ...prev];
+    // initialize socket singleton
+    if (!socket) socket = getSocket()
 
-          // Limita a 9 itens (página cheia)
-          return novaLista.slice(0, 9);
-        }
-        return prev;
-      });
-      // Atualiza total de páginas se necessário
-      setTotalPages(tp => {
-        // Se já está correto, mantém
-        if (residuos.length % 9 !== 0) return tp;
-        return tp + 1;
-      });
-    };
-    socket.on("residuo-registrado", handleResiduoRegistrado);
-    return () => {
-      socket?.off("residuo-registrado", handleResiduoRegistrado);
-    };
+    // Subscribe via helper
+  const unsub = onDataUpdated((event) => {
+      if (!event || event.resource !== "residuo") return
+      const { action, payload } = event as { resource: string; action: string; id?: number; payload?: unknown }
+
+      if (action === "created" && payload && typeof payload === "object" && 'id' in (payload as Record<string, unknown>)) {
+        const residuoPayload = payload as Residuo
+        setResiduos(prev => {
+          if (prev.some(r => r.id === residuoPayload.id)) return prev
+          if (currentPage === 1) {
+            const nova = [residuoPayload, ...prev].slice(0, 9)
+            // update caches
+            try {
+              const full = (inMemoryCacheRef.current || [])
+              full.unshift(residuoPayload)
+              inMemoryCacheRef.current = full
+              setCache(cacheKey, full)
+            } catch {}
+            return nova
+          }
+          return prev
+        })
+      }
+
+      if (action === "deleted" && event.id) {
+        setResiduos(prev => {
+          const filtered = prev.filter(r => r.id !== event.id)
+          try {
+            if (inMemoryCacheRef.current) {
+              inMemoryCacheRef.current = inMemoryCacheRef.current.filter(r => r.id !== (event.id || 0))
+              setCache(cacheKey, inMemoryCacheRef.current)
+            }
+          } catch {}
+          return filtered
+        })
+      }
+    })
+
+  return () => { if (unsub) { unsub() } }
 
   }, [currentPage, residuos.length]);
 
@@ -307,9 +333,9 @@ export default function FeedPage() {
   ]
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen mt-8">
       {/* Título da página */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-12 py-12 bg-white border rounded-xl">
         {/* Search and Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1 relative">
@@ -317,7 +343,7 @@ export default function FeedPage() {
             <input
               type="text"
               placeholder="Buscar por empresa ou material..."
-              className="pl-10 bg-white border text-gray-900 border-[#00A2AA]/50 h-12 rounded w-full focus:border-[#00A2AA]"
+              className="pl-10 bg-white border  text-gray-900 border-[#00A2AA]/50 h-12 rounded w-full focus:border-[#00A2AA]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -325,7 +351,7 @@ export default function FeedPage() {
           </div>
           <div className="w-full md:w-64">
             <select
-              className="bg-white border text-gray-900 border-[#00A2AA]/50 h-12 rounded w-full px-3 focus:border-[#00A2AA]"
+              className="bg-white border text-gray-900 cursor-pointer border-[#00A2AA]/50 h-12 rounded w-full px-3 focus:border-[#00A2AA]"
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
             >
@@ -337,7 +363,7 @@ export default function FeedPage() {
           </div>
           <button
             onClick={handleSearch}
-            className="bg-teal-600 hover:bg-teal-700 text-white px-6 h-12 rounded font-medium transition-colors"
+            className="bg-teal-600 cursor-pointer hover:bg-teal-700 text-white px-6 h-12 rounded font-medium transition-colors"
           >
             Buscar
           </button>
@@ -346,81 +372,7 @@ export default function FeedPage() {
         {/* ========================================
             NOVO: Dashboard de Métricas
             ======================================== */}
-        {dashboardMetrics && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {/* Campo 1: Resíduos Anunciados */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    Resíduos Anunciados
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardMetrics.residuosAnunciados.total}
-                  </p>
-                  <p className="text-sm text-green-600 font-medium">
-                    +{dashboardMetrics.residuosAnunciados.incremento} {dashboardMetrics.residuosAnunciados.periodo}
-                  </p>
-                </div>
-                {/* <div className="text-3xl">📦</div> */}
-              </div>
-            </div>
-
-            {/* Campo 2: Transações Concluídas */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    Transações Concluídas
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardMetrics.transacoesConcluidas.total}
-                  </p>
-                  <p className="text-sm text-gray-500 font-medium">
-                    {dashboardMetrics.transacoesConcluidas.periodo}
-                  </p>
-                </div>
-                {/* <div className="text-3xl">✅</div> */}
-              </div>
-            </div>
-
-            {/* Campo 3: Economia Gerada */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    Economia Gerada
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(dashboardMetrics.economiaGerada.valor)}
-                  </p>
-                  <p className="text-sm text-green-600 font-medium">
-                    +{dashboardMetrics.economiaGerada.incrementoPercentual}% {dashboardMetrics.economiaGerada.periodo}
-                  </p>
-                </div>
-                {/* <div className="text-3xl">💰</div> */}
-              </div>
-            </div>
-
-            {/* Campo 4: Empresas Conectadas */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    Empresas Conectadas
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboardMetrics.empresasConectadas.total}
-                  </p>
-                  <p className="text-sm text-green-600 font-medium">
-                    +{dashboardMetrics.empresasConectadas.novasParcerias} nova parceria
-                  </p>
-                </div>
-                {/* <div className="text-3xl">🤝</div> */}
-              </div>
-            </div>
-          </div>
-        )}
+        
 
         <h1 className="text-2xl pt-4 pb-4 font-bold text-gray-900 mb-4 md:mb-0">
           Resíduos Ofertados
@@ -431,10 +383,50 @@ export default function FeedPage() {
           )}
         </h1>
 
-        {/* Loading state */}
+        {/* Loading state: skeleton cards with centered green spinner */}
         {loading && (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden transition hover:shadow-md hover:border-teal-200"
+                style={{ minHeight: 320 }}
+              >
+                {/* imagem placeholder - mantém h-40 */}
+                <div className="w-full h-40 bg-gray-200 flex items-center justify-center overflow-hidden rounded-t-2xl animate-pulse">
+                  <div className="w-full h-full bg-gray-200" />
+                </div>
+
+                {/* conteúdo placeholder com proporções similares ao conteúdo real */}
+                <div className="flex-1 flex flex-col justify-between px-5 py-4">
+                  <div>
+                    {/* título - corresponde a text-lg font-bold mb-1 */}
+                    <div className="h-5 bg-gray-100 rounded w-3/4 mb-1 animate-pulse" />
+
+                    {/* empresa + quantidade (linha) - text-sm spacing */}
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="h-3 bg-gray-100 rounded w-1/2 animate-pulse" />
+                      <div className="h-3 bg-gray-100 rounded w-1/4 animate-pulse" />
+                    </div>
+
+                    {/* descrição: duas linhas (text-sm) */}
+                    <div className="h-3 bg-gray-100 rounded w-full mb-2 animate-pulse" />
+                    <div className="h-3 bg-gray-100 rounded w-5/6 mb-2 animate-pulse" />
+
+                    {/* local (cidade/estado) - text-xs */}
+                    <div className="h-3 bg-gray-100 rounded w-1/3 mb-1 animate-pulse" />
+                  </div>
+
+                  {/* footer: preço + botão */}
+                  <div className="flex items-end justify-between mt-2">
+                    <div className="h-6 bg-gray-100 rounded w-32 animate-pulse" />
+                    <div className="h-9 w-28 rounded-lg bg-gray-100 animate-pulse" />
+                  </div>
+                </div>
+
+                {/* card skeleton only - no spinner overlay */}
+              </div>
+            ))}
           </div>
         )}
 

@@ -1,5 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback, useRef } from "react"
+import { getCache, setCache, isStale } from "@/lib/cache"
+import { fetchJsonWithTimeout } from "@/lib/fetchWithTimeout"
 import { PageTitleProvider } from "../components/MainLayout"
 import { useChatSocket } from "./useChatSocket"
 import { ArrowLeft, Send, MoreVertical, MessageCircle, Search } from "lucide-react"
@@ -50,46 +52,59 @@ async function fetchMatches(userId: string, selectedChatId?: string): Promise<Ma
   try {
     const response = await fetch(`/api/proposals-accepted?userId=${userId}`)
     const data = await response.json();
-    if (!Array.isArray(data)) {
-      return [];
-    }
+    if (!Array.isArray(data)) return []
+
+    // For performance, fetch chat histories in parallel and reuse cache when available
     const matches: Match[] = await Promise.all(data.map(async (match: ApiMatch, index: number) => {
-      let messages: Message[] = [];
-      let lastSeenMessageId = 0;
-      try {
-        const res = await fetch(`/api/chat-history?matchId=${match.id}`);
-        const msgs = await res.json();
-        if (Array.isArray(msgs)) {
-          messages = msgs.map((msg) => ({
-            id: msg.id,
-            sender: msg.senderId == userId ? "me" : "other",
-            content: msg.content,
-            timestamp: new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-            senderId: msg.senderId
-          }));
+      // Try cache first
+      const cacheKey = `chat_history_${match.id}`
+      let messages: Message[] = []
+      let lastSeenMessageId = 0
+
+      const cached = getCache<Message[]>(cacheKey)
+      if (cached && cached.value && !isStale(cacheKey, 30 * 1000)) {
+        messages = cached.value
+      } else {
+        try {
+          const msgs = await fetchJsonWithTimeout(`/api/chat-history?matchId=${match.id}`, { timeout: 7000, retries: 2 })
+          if (Array.isArray(msgs)) {
+            messages = msgs.map((msg) => ({
+              id: msg.id,
+              sender: msg.senderId == userId ? "me" : "other",
+              content: msg.content,
+              timestamp: new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+              senderId: msg.senderId
+            }))
+            setCache(cacheKey, messages)
+          }
+        } catch {
+          // ignore per-match failures
         }
+      }
+
+      try {
         if (userId) {
-          const seenRes = await fetch(`/api/chat-last-seen?matchId=${match.id}&empresaId=${userId}`);
-          const seenData = await seenRes.json();
-          if (seenData && seenData.lastSeenMessageId) lastSeenMessageId = seenData.lastSeenMessageId;
+          const seenData = await fetchJsonWithTimeout(`/api/chat-last-seen?matchId=${match.id}&empresaId=${userId}`, { timeout: 5000, retries: 1 })
+          if (seenData && typeof (seenData as unknown as Record<string, unknown>).lastSeenMessageId === 'number') lastSeenMessageId = Number((seenData as unknown as Record<string, unknown>).lastSeenMessageId)
         }
       } catch {}
-      let wasteType = "Resíduo";
+
+      let wasteType = "Resíduo"
       if (match.residueData) {
-        // @ts-expect-error: tipoResiduo pode não existir na tipagem ResidueData
-        if (typeof match.residueData.tipoResiduo === "string" && match.residueData.tipoResiduo) {
-          // @ts-expect-error: tipoResiduo pode não existir na tipagem ResidueData
-          wasteType = match.residueData.tipoResiduo;
-        } else if (typeof match.residueData.descricao === "string" && match.residueData.descricao) {
-          wasteType = match.residueData.descricao;
-        }
+        const rd = match.residueData as unknown as Record<string, unknown>
+        const tipo = typeof rd.tipoResiduo === 'string' ? String(rd.tipoResiduo) : undefined
+        const descricao = typeof rd.descricao === 'string' ? String(rd.descricao) : undefined
+        if (tipo) wasteType = tipo
+        else if (descricao) wasteType = descricao
       }
-      const lastMessage = (messages.length > 0 ? messages[messages.length - 1].content : (match.proposalData?.message || "Proposta aceita! Vamos negociar?"));
-      const lastTimestamp = (messages.length > 0 ? messages[messages.length - 1].timestamp : new Date(match.acceptedAt?.seconds ? match.acceptedAt.seconds * 1000 : Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-      let unread = 0;
+
+      const lastMessage = (messages.length > 0 ? messages[messages.length - 1].content : (match.proposalData?.message || "Proposta aceita! Vamos negociar?"))
+      const lastTimestamp = (messages.length > 0 ? messages[messages.length - 1].timestamp : new Date(match.acceptedAt?.seconds ? match.acceptedAt.seconds * 1000 : Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))
+      let unread = 0
       if (messages.length > 0 && match.id !== selectedChatId) {
-        unread = messages.filter(m => m.sender === "other" && m.id > lastSeenMessageId).length;
+        unread = messages.filter(m => m.sender === "other" && m.id > lastSeenMessageId).length
       }
+
       return {
         id: match.id,
         company: match.residueData?.companyName || `Empresa ${index + 1}`,
@@ -101,6 +116,7 @@ async function fetchMatches(userId: string, selectedChatId?: string): Promise<Ma
         messages
       }
     }))
+
     return matches.sort((a: Match, b: Match) => {
       if (b.messages.length && a.messages.length) {
         return b.messages[b.messages.length-1].id - a.messages[a.messages.length-1].id;
@@ -156,8 +172,7 @@ export default function ChatPage() {
     if (!selectedChat || !userId) return
     if (loadingMessages.current[selectedChat]) return
     loadingMessages.current[selectedChat] = true
-    fetch(`/api/chat-history?matchId=${selectedChat}`)
-      .then(res => res.json())
+    fetchJsonWithTimeout(`/api/chat-history?matchId=${selectedChat}`, { timeout: 8000, retries: 2 })
       .then(async (msgs) => {
         let lastSeenMessageId = 0;
         let lastMessageContent = "";
@@ -191,38 +206,67 @@ export default function ChatPage() {
       .finally(() => { loadingMessages.current[selectedChat] = false })
   }, [selectedChat, userId])
 
-  const onSocketMessage = useCallback((msg: Message & { matchId?: string }) => {
-    if (!msg || !msg.matchId) return;
-    fetch(`/api/chat-history?matchId=${msg.matchId}`)
-      .then(res => res.json())
-      .then((msgs) => {
-        setMatches(prev => prev.map(match => {
-          if (match.id !== msg.matchId) return match;
-          if (!Array.isArray(msgs)) return match;
-          const lastOtherMsg = [...msgs].reverse().find(m => m.senderId != userId);
-          const lastMsg = msgs[msgs.length - 1];
-          let unread = match.unread;
-          if (selectedChat === msg.matchId) {
-            unread = 0;
-          } else if (lastMsg && lastMsg.senderId != userId) {
-            unread = match.unread + 1;
-          }
-          return {
-            ...match,
-            messages: selectedChat === msg.matchId
-              ? msgs.map((msg) => ({
-                  id: msg.id,
-                  sender: msg.senderId == userId ? "me" : "other",
-                  content: msg.content,
-                  timestamp: new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                  senderId: msg.senderId
-                }))
-              : match.messages,
-            lastMessage: lastOtherMsg ? lastOtherMsg.content : (lastMsg ? lastMsg.content : match.lastMessage),
-            unread
-          }
-        }))
+  const onSocketMessage = useCallback((incoming: unknown) => {
+    // incoming can be either a Message-like object or a wrapped payload
+  // safe extraction from unknown incoming
+  const inc = (incoming && typeof incoming === 'object') ? incoming as Record<string, unknown> : {} as Record<string, unknown>
+  const incPayload = (inc['payload'] && typeof inc['payload'] === 'object') ? inc['payload'] as Record<string, unknown> : undefined
+  const matchIdVal = inc['matchId'] ?? (incPayload ? incPayload['matchId'] : undefined)
+  const matchId = (typeof matchIdVal === 'string' || typeof matchIdVal === 'number') ? String(matchIdVal) : undefined
+  if (!matchId) return
+
+  // Normalize incoming message
+  const payload = incPayload ?? inc
+    const senderIdVal = payload['senderId'] ?? payload['sender']
+    const senderId = (typeof senderIdVal === 'string' || typeof senderIdVal === 'number') ? String(senderIdVal) : undefined
+    const contentVal = payload['content'] ?? ''
+    const content = typeof contentVal === 'string' ? contentVal : String(contentVal)
+    const rawTs = payload['timestamp'] ?? payload['createdAt'] ?? new Date().toISOString()
+    const timestamp = typeof rawTs === 'string' ? new Date(rawTs).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+
+    const isFromMe = userId ? Number(senderId) === Number(userId) : false
+    const newMsg: Message = {
+      id: Number(payload.id) || Date.now(),
+      sender: isFromMe ? 'me' : 'other',
+      content,
+      timestamp,
+      senderId: Number(senderId) || undefined
+    }
+
+    // Update cache for this chat history (append)
+    try {
+      const cacheKey = `chat_history_${matchId}`
+      const cached = getCache<Message[]>(cacheKey)
+      const updatedCache = Array.isArray(cached?.value) ? [...cached!.value, newMsg] : [newMsg]
+      setCache(cacheKey, updatedCache)
+    } catch {
+      // ignore cache errors
+    }
+
+    setMatches(prev => {
+      let updated = prev.map(match => {
+        if (match.id !== matchId) return match
+        const lastMessage = newMsg.content || match.lastMessage
+        let unread = match.unread
+        let messages = match.messages
+        if (selectedChat === matchId) {
+          // If the conversation is open, append and reset unread
+          messages = [...messages, newMsg]
+          unread = 0
+        } else {
+          // Not open, increment unread if message is from other
+          if (!isFromMe) unread = (match.unread || 0) + 1
+        }
+        return { ...match, messages, lastMessage, unread }
       })
+      // Move the touched match to top for recency
+      const idx = updated.findIndex(m => m.id === matchId)
+      if (idx > 0) {
+        const [moved] = updated.splice(idx, 1)
+        updated = [moved, ...updated]
+      }
+      return updated
+    })
   }, [selectedChat, userId])
 
   const allMatchIds = matches.map(m => m.id)
@@ -274,27 +318,23 @@ export default function ChatPage() {
         }
         return updated;
       });
-      setTimeout(() => {
-        fetch(`/api/chat-history?matchId=${selectedMatch.id}`)
-          .then(res => res.json())
-          .then((msgs) => {
-            setMatches(prev => prev.map(match => {
-              if (match.id !== selectedMatch.id) return match
-              if (!Array.isArray(msgs)) return match
-              return {
-                ...match,
-                messages: msgs.map((msg) => ({
-                  id: msg.id,
-                  sender: msg.senderId == userId ? "me" : "other",
-                  content: msg.content,
-                  timestamp: new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                  senderId: msg.senderId
-                })),
-                lastMessage: msgs.length > 0 ? msgs[msgs.length - 1].content : match.lastMessage
-              }
-            }))
-          })
-      }, 200)
+      // Instead of refetching immediately, rely on socket/data-updated to provide the persisted message
+      // but update cache locally so UI feels instant
+      try {
+        const cacheKey = `chat_history_${selectedMatch.id}`
+        const cached = getCache<Message[]>(cacheKey)
+        const userIdNum = Number(userId)
+        const appended = Array.isArray(cached?.value) ? [...cached!.value, {
+          id: 0,
+          sender: 'me',
+          content: message.trim(),
+          timestamp: outgoingMessage.timestamp,
+          senderId: userIdNum
+        }] : [{ id: 0, sender: 'me', content: message.trim(), timestamp: outgoingMessage.timestamp, senderId: userIdNum }]
+        setCache(cacheKey, appended)
+      } catch {
+        // ignore cache errors
+      }
     }
   }
 

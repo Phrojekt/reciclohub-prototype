@@ -1,4 +1,5 @@
 // Serviços para consumir as APIs de resíduos
+import { fetchWithTimeout } from "@/lib/fetchWithTimeout"
 
 export interface Residuo {
   id: number
@@ -80,12 +81,7 @@ export class ResiduoService {
       if (params?.offset) searchParams.append('offset', params.offset.toString())
       
       const url = `${this.baseUrl}/consult-residues?${searchParams.toString()}`
-      const response = await fetch(url)
-      
-      if (!response.ok) {
-        throw new Error(`Erro ${response.status}: ${response.statusText}`)
-      }
-      
+      const response = await fetchWithTimeout(url, { timeout: 8000, retries: 2 })
       return await response.json()
     } catch (error) {
       console.error('Erro ao buscar resíduos:', error)
@@ -96,16 +92,7 @@ export class ResiduoService {
   // Buscar um resíduo específico por ID
   static async getResiduoById(id: number) {
     try {
-      const response = await fetch(`${this.baseUrl}/consult-residues`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      })
-      
-      if (!response.ok) {
-        throw new Error(`Erro ${response.status}: ${response.statusText}`)
-      }
-      
+      const response = await fetchWithTimeout(`${this.baseUrl}/consult-residues`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }), timeout: 8000, retries: 2 })
       return await response.json()
     } catch (error) {
       console.error('Erro ao buscar resíduo:', error)
@@ -121,12 +108,7 @@ export class ResiduoService {
       if (userId) searchParams.append('userId', userId)
       
       const url = `${this.baseUrl}/my-offers?${searchParams.toString()}`
-      const response = await fetch(url)
-      
-      if (!response.ok) {
-        throw new Error(`Erro ${response.status}: ${response.statusText}`)
-      }
-      
+      const response = await fetchWithTimeout(url, { timeout: 8000, retries: 2 })
       return await response.json()
     } catch (error) {
       console.error('Erro ao buscar minhas ofertas:', error)
@@ -141,12 +123,7 @@ export class ResiduoService {
       if (empresaId) searchParams.append('empresaId', empresaId.toString())
       
       const url = `${this.baseUrl}/stats?${searchParams.toString()}`
-      const response = await fetch(url)
-      
-      if (!response.ok) {
-        throw new Error(`Erro ${response.status}: ${response.statusText}`)
-      }
-      
+      const response = await fetchWithTimeout(url, { timeout: 8000, retries: 2 })
       return await response.json()
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error)
@@ -157,16 +134,7 @@ export class ResiduoService {
   // Busca avançada com filtros
   static async advancedSearch(filters: SearchFilters) {
     try {
-      const response = await fetch(`${this.baseUrl}/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(filters)
-      })
-      
-      if (!response.ok) {
-        throw new Error(`Erro ${response.status}: ${response.statusText}`)
-      }
-      
+      const response = await fetchWithTimeout(`${this.baseUrl}/search`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(filters), timeout: 8000, retries: 2 })
       return await response.json()
     } catch (error) {
       console.error('Erro na busca avançada:', error)
@@ -200,16 +168,7 @@ export class ResiduoService {
       formData.append("userId", data.userId);
       data.imagens.forEach((file) => formData.append("imagens", file));
 
-      const response = await fetch(`${this.baseUrl}/register-residues`, {
-        method: 'POST',
-        body: formData
-      })
-      
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || `Erro ${response.status}: ${response.statusText}`)
-      }
-      
+      const response = await fetchWithTimeout(`${this.baseUrl}/register-residues`, { method: 'POST', body: formData, timeout: 20000, retries: 2 })
       return await response.json()
     } catch (error) {
       console.error('Erro ao cadastrar resíduo:', error)

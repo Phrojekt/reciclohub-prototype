@@ -1,5 +1,5 @@
-import io from "socket.io-client"
 import { useEffect, useRef } from "react"
+import { getSocket, onDataUpdated, joinRoom, leaveRoom } from "@/lib/socket"
 
 export interface Message {
   id: number
@@ -14,26 +14,35 @@ export function useChatSocket(
   onMessage: (msg: Message) => void,
   allMatchIds?: string[]
 ) {
-  const socketRef = useRef<ReturnType<typeof io> | null>(null)
+  const socketRef = useRef<ReturnType<typeof getSocket> | null>(null)
 
   useEffect(() => {
     if (!socketRef.current) {
-      socketRef.current = io({ path: "/api/socketio" })
+      socketRef.current = getSocket()
     }
     const socket = socketRef.current
     // Join em todas as rooms dos matches
     if (allMatchIds && allMatchIds.length > 0) {
-      allMatchIds.forEach(id => socket.emit("join", id))
+      allMatchIds.forEach(id => joinRoom(id))
     } else if (matchId) {
-      socket.emit("join", matchId)
+      joinRoom(matchId)
     }
     socket.on("message", onMessage)
+
+    // Subscribe to centralized 'data-updated' via helper
+    const unsub = onDataUpdated((event) => {
+      if (event?.resource === "chatMessage" && event.action === "created" && typeof event.payload === 'object' && event.payload) {
+        onMessage(event.payload as Message)
+      }
+    })
+
     return () => {
       socket.off("message", onMessage)
+      unsub()
       if (allMatchIds && allMatchIds.length > 0) {
-        allMatchIds.forEach(id => socket.emit("leave", id))
+        allMatchIds.forEach(id => leaveRoom(id))
       } else if (matchId) {
-        socket.emit("leave", matchId)
+        leaveRoom(matchId)
       }
     }
   }, [matchId, onMessage, allMatchIds])
