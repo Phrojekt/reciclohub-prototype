@@ -43,7 +43,7 @@ export default function Navbar() {
         {/* Logo */}
         <div className="flex items-center px-8 py-8 border-b border-gray-100">
           <Image
-            src="/RECICLOHUB_Green.png"
+            src="/reciclohub.newLogo.svg"
             alt="RecicloHub"
             width={120}
             height={40}
@@ -83,7 +83,7 @@ export default function Navbar() {
         {/* Logo Hub no rodapé */}
         <div className="mt-auto px-8 py-8 flex items-center justify-center">
           <Image
-            src="/RecicloHub_CircleGreen_logo.png"
+            src="/reciclohubShortlogo.svg"
             alt="Hub"
             width={100}
             height={100}
@@ -168,7 +168,7 @@ export default function Navbar() {
           </nav>
           <div className="px-8 py-8 flex items-center justify-center">
             <Image
-              src="/RecicloHub_CircleGreen_logo.png"
+              src="/reciclohubShortlogo.svg"
               alt="Hub"
               width={80}
               height={80}
