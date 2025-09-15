@@ -25,6 +25,7 @@ export default function NotificationsMenu({ buttonClass = '', iconClass = '', hi
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [hasNew, setHasNew] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   // track which notifications are newly received since last open
   const [newIds, setNewIds] = useState<Set<number>>(new Set())
   const ref = useRef<HTMLDivElement | null>(null)
@@ -67,6 +68,7 @@ export default function NotificationsMenu({ buttonClass = '', iconClass = '', hi
 
     async function init() {
       try {
+        setIsLoading(true)
         console.log('NotificationsMenu: Starting initialization...')
         const res = await fetch('/api/auth/me')
         console.log('NotificationsMenu: Auth response status:', res.status)
@@ -96,6 +98,7 @@ export default function NotificationsMenu({ buttonClass = '', iconClass = '', hi
         
         if (!empresaId) {
           console.log('NotificationsMenu: No empresaId found anywhere')
+          setIsLoading(false)
           return
         }
 
@@ -115,6 +118,7 @@ export default function NotificationsMenu({ buttonClass = '', iconClass = '', hi
         } else {
           console.log('NotificationsMenu: Failed to fetch notifications:', await r.text())
         }
+        setIsLoading(false)
 
         // Subscribe to socket for live notifications
         function onNotification(ev: { empresaId?: number | string; propostaId?: number; tipo?: string; titulo?: string; mensagem?: string }) {
@@ -169,6 +173,7 @@ export default function NotificationsMenu({ buttonClass = '', iconClass = '', hi
         }
       } catch (e) {
         console.warn('Failed to initialize notifications', e)
+        setIsLoading(false)
       }
     }
 
@@ -207,7 +212,23 @@ export default function NotificationsMenu({ buttonClass = '', iconClass = '', hi
             <button className="text-sm text-gray-500 cursor-pointer" onClick={() => setOpen(false)}>Fechar</button>
           </div>
           <div className="p-0 max-h-80 overflow-auto">
-            {notifications && notifications.length > 0 ? (
+            {isLoading ? (
+              <div className="p-4 space-y-3">
+                {/* Skeleton loading for notifications */}
+                {[...Array(3)].map((_, index) => (
+                  <div key={index} className="animate-pulse">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                        <div className="h-3 bg-gray-300 rounded w-1/4"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : notifications && notifications.length > 0 ? (
                 notifications.map((n) => {
                   const isNew = newIds.has(n.id) || !n.visualizada
                   return (
@@ -264,20 +285,14 @@ export default function NotificationsMenu({ buttonClass = '', iconClass = '', hi
                   )
                 })
               ) : (
-                <div className="p-4 space-y-3">
-                  {/* Skeleton loading for notifications */}
-                  {[...Array(3)].map((_, index) => (
-                    <div key={index} className="animate-pulse">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                          <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                          <div className="h-3 bg-gray-300 rounded w-1/4"></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="p-4 text-center text-gray-500">
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <svg className="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-600">Nenhuma notificação</p>
+                    <p className="text-xs text-gray-400 mt-1">Você está em dia!</p>
+                  </div>
                 </div>
               )}
             {notifications && notifications.length > 0 && (
