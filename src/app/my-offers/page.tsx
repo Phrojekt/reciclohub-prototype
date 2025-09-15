@@ -272,6 +272,8 @@ export default function MyOffersPage() {
         width={400}
         height={160}
         style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+        quality={100}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         onLoadingComplete={() => {
           console.log(`✅ Imagem carregada para resíduo ${offer.id}`)
         }}
@@ -571,7 +573,7 @@ export default function MyOffersPage() {
                       <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">
                         {offer.tipoResiduo}
                       </h3>
-                      <p className="text-gray-600 text-sm line-clamp-2">
+                      <p className="text-black text-sm line-clamp-2">
                         {offer.descricao}
                       </p>
                     </div>
@@ -580,11 +582,11 @@ export default function MyOffersPage() {
                     <div className="bg-gray-50 rounded-lg p-2 mb-3">
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <span className="text-gray-500 block text-xs mb-1">Quantidade</span>
+                          <span className="text-black block text-xs mb-1">Quantidade</span>
                           <span className="font-semibold text-gray-800">{offer.quantidade} {offer.unidade}</span>
                         </div>
                         <div>
-                          <span className="text-gray-500 block text-xs mb-1">Condições</span>
+                          <span className="text-black block text-xs mb-1">Condições</span>
                           <span className="font-semibold text-gray-800 line-clamp-1">{offer.condicoes}</span>
                         </div>
                       </div>

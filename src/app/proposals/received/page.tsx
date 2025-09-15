@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { fetchJsonWithTimeout } from "@/lib/fetchWithTimeout"
 import { getCache, setCache } from "@/lib/cache"
 import { Clock, CheckCircle, XCircle, User, Package } from "lucide-react"
@@ -14,6 +15,7 @@ interface Proposta {
   status: 'PENDENTE' | 'ACEITA' | 'REJEITADA'
   criadaEm: string
   empresaProponente: {
+    id: number
     nome: string
     email: string
     cidade: string
@@ -247,7 +249,16 @@ export default function PropostasRecebidasPage() {
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-400" />
                       <div>
-                        <p className="font-medium text-gray-900">{proposta.empresaProponente.nome}</p>
+                        {proposta.empresaProponente && proposta.empresaProponente.id ? (
+                          <Link 
+                            href={`/user/${proposta.empresaProponente.id}`}
+                            className="font-medium text-gray-900 hover:text-teal-600 hover:underline transition-colors cursor-pointer"
+                          >
+                            {proposta.empresaProponente.nome}
+                          </Link>
+                        ) : (
+                          <p className="font-medium text-gray-900">{proposta.empresaProponente.nome}</p>
+                        )}
                         <p className="text-sm text-gray-600">
                           {proposta.empresaProponente.cidade}, {proposta.empresaProponente.estado}
                         </p>

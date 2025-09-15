@@ -702,14 +702,12 @@ export default function ChatPage() {
     <PageTitleProvider title="Conversas">
       {/* ALTERAÇÃO VISUAL: Container principal com fundo mais claro, estilo WhatsApp */}
   <div className="min-h-screen">
-        {/* When a chat is selected on small screens we render a fixed full-screen overlay so the chat
-            takes the whole viewport and only the messages panel scrolls. On md+ we keep the original
-            centered layout. */}
-        <div className={`${selectedChat ? 'fixed inset-0 z-40 bg-white' : ''} w-full`}>
-          <div className={`max-w-7xl mx-auto ${selectedChat ? 'h-full' : ''} flex mt-2`} style={!selectedChat ? { height: `calc(var(--vh, 1vh) * 100 - 80px)` } : undefined}> 
+        {/* Container principal: overlay fullscreen apenas em mobile quando chat selecionado */}
+        <div className={`${selectedChat ? 'md:relative fixed inset-0 z-40 bg-white md:bg-transparent md:inset-auto md:z-auto' : ''} w-full`}>
+          <div className={`max-w-7xl mx-auto ${selectedChat ? 'h-full' : ''} flex mt-2`} style={{ height: `calc(var(--vh, 1vh) * 100 - 80px)` }}> 
           
-          {/* ALTERAÇÃO VISUAL: Chat List - Fundo branco conforme solicitado */}
-          <div className={`w-full md:w-1/3 bg-white border-r ${selectedChat ? "hidden md:block" : ""} h-full`}>
+          {/* Chat List - escondida em mobile quando chat selecionado, sempre visível em desktop */}
+          <div className={`w-full md:w-1/3 bg-white border-r h-full ${selectedChat ? "hidden md:block" : ""}`}>
             
             {/* ALTERAÇÃO VISUAL: Header da lista com busca */}
             <div className="p-4 border-b bg-white">
@@ -779,8 +777,7 @@ export default function ChatPage() {
           </div>
 
           {/* ALTERAÇÃO VISUAL: Chat Area com fundo personalizado */}
-          {/* Chat area: on small screens when a chat is selected we show this pane full-screen (no body scroll)
-              header and input have fixed heights and messages area is the only scrolling container */}
+          {/* Chat area: fullscreen em mobile quando selecionado, painel lateral em desktop */}
           <div className={`flex-1 flex flex-col h-full ${!selectedChat ? "hidden md:flex" : ""} ${selectedChat ? 'w-full md:w-auto' : ''}`}>
             {selectedChat && selectedMatch ? (
               <>

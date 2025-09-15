@@ -28,6 +28,7 @@ export async function GET(req: Request) {
       include: {
         empresaProponente: {
           select: {
+            id: true,
             nome: true,
             email: true,
             cidade: true,

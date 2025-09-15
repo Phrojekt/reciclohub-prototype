@@ -59,7 +59,7 @@ export default function Navbar() {
           <Image
             src="/reciclohub.newLogo.svg"
             alt="RecicloHub"
-            width={120}
+            width={160}
             height={40}
             className="object-contain"
           />
@@ -156,9 +156,13 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* User info block inside mobile menu (styled like sidebar nav item, disabled) */}
+          {/* User info block inside mobile menu (styled like sidebar nav item, now clickable) */}
           <div className="px-8 py-4">
-            <div className="px-8 py-3 text-base font-medium flex flex-col items-center text-gray-700">
+            <Link 
+              href="/profile"
+              className="px-8 py-3 text-base font-medium flex flex-col items-center text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              onClick={() => setMobileOpen(false)}
+            >
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden mb-3">
                 {user && user.avatarUrl ? (
                   <Image src={user.avatarUrl} alt={user.nome || 'Usuário'} width={64} height={64} className="object-cover" />
@@ -169,7 +173,8 @@ export default function Navbar() {
                 )}
               </div>
               <div className="text-gray-900 font-medium">{user?.nome ?? 'Usuário'}</div>
-            </div>
+              <div className="text-sm text-gray-500">Ver perfil</div>
+            </Link>
             <div className="mt-3 border-b border-gray-100" />
           </div>
           <nav className="flex-1 flex flex-col gap-2 px-8 py-8 overflow-y-auto min-h-0">

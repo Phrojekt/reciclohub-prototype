@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useState, createContext, useContext } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import Navbar from "./Navbar";
 import NotificationsMenu from "./NotificationsMenu";
 
@@ -35,6 +36,8 @@ export function MainLayout({ children }: { children: ReactNode }) {
     "my-offers": "Minhas Ofertas",
     "edit-residues": "Editar Resíduo",
     "notifications": "Notificações",
+    "profile": "Perfil",
+    "user": "Perfil de Usuário",
     // Adicione outros conforme necessário
   };
 
@@ -44,8 +47,10 @@ export function MainLayout({ children }: { children: ReactNode }) {
     const parts = pathname.split("/").filter(Boolean);
     if (parts.length === 0) return "RecicloHub";
     let last = parts[parts.length - 1];
-    // Se for id dinâmico, pega o anterior
-    if (last.startsWith("[")) last = parts[parts.length - 2] || last;
+    // Se for id dinâmico (começa com [ ou é um número), pega o anterior
+    if (last.startsWith("[") || !isNaN(Number(last))) {
+      last = parts[parts.length - 2] || last;
+    }
     // Usa o mapeamento se existir
     if (routeTitles[last]) return routeTitles[last];
     // Fallback: capitaliza
@@ -90,8 +95,8 @@ export function MainLayout({ children }: { children: ReactNode }) {
         {/* Notificação e Perfil */}
         <div className="flex items-center gap-3 sm:gap-6 min-w-0 justify-end">
           <NotificationsMenu buttonClass="relative p-2 rounded-full hidden sm:inline-flex" iconClass="text-teal-700" hideOnMobile />
-          {/* <Link href="/profile" ...> ... </Link> */}
-          <div className="items-center gap-2 min-w-0 sm:flex hidden group opacity-60 cursor-not-allowed select-none">
+          {/* Profile Link */}
+          <Link href="/profile" className="items-center gap-2 min-w-0 sm:flex hidden group hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer">
             <div className="w-9 h-9 sm:w-10 sm:h-10 bg-teal-600 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg">
               {userProfile?.name?.[0]?.toUpperCase() || "U"}
             </div>
@@ -99,7 +104,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
               <span className="text-xs sm:text-sm font-semibold text-gray-900 leading-tight truncate max-w-[80px] sm:max-w-[120px]">{userProfile?.name || "Usuário"}</span>
               <span className="text-[10px] sm:text-xs text-gray-500 truncate max-w-[80px] sm:max-w-[120px]">{userProfile?.role || "Usuário"}</span>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
       {/* FIM HEADER */}

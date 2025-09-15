@@ -75,10 +75,16 @@ export async function GET(req: Request) {
       skip,
     });
 
+    // Filtrar apenas resíduos com empresas válidas
+    const residuosValidos = residuos.filter(residuo => {
+      if (!residuo.empresa) {
+        return false
+      }
+      return true
+    })
+
     // Contar total de resíduos (para paginação)
     const total = await prisma.residuos.count({ where });
-
-    console.log(`Encontrados ${residuos.length} resíduos de um total de ${total}`);
 
     // Função para processar URLs de imagem
     const processImageUrl = (url: string): string => {
@@ -87,25 +93,25 @@ export async function GET(req: Request) {
     };
 
     // Formatar resposta
-    const residuosFormatados = residuos.map((residuo) => ({
-      id: residuo.id,
-      tipoResiduo: residuo.tipoResiduo,
-      descricao: residuo.descricao,
-      quantidade: residuo.quantidade,
-      unidade: residuo.unidade,
-      condicoes: residuo.condicoes,
-      disponibilidade: residuo.disponibilidade,
-      preco: residuo.preco,
-      imagens: residuo.imagens
-        .map((imagem) => ({
-          id: imagem.id,
-          url: processImageUrl(imagem.url),
-        })),
-      empresa: residuo.empresa,
-      totalImagens: residuo.imagens.filter(img => img.url && img.url.trim() !== '').length,
-    }));
-
-    return NextResponse.json(
+    const residuosFormatados = residuosValidos.map((residuo) => {
+      return {
+        id: residuo.id,
+        tipoResiduo: residuo.tipoResiduo,
+        descricao: residuo.descricao,
+        quantidade: residuo.quantidade,
+        unidade: residuo.unidade,
+        condicoes: residuo.condicoes,
+        disponibilidade: residuo.disponibilidade,
+        preco: residuo.preco,
+        imagens: residuo.imagens
+          .map((imagem) => ({
+            id: imagem.id,
+            url: processImageUrl(imagem.url),
+          })),
+        empresa: residuo.empresa,
+        totalImagens: residuo.imagens.filter(img => img.url && img.url.trim() !== '').length,
+      }
+    });    return NextResponse.json(
       {
         success: true,
         data: residuosFormatados,
@@ -113,7 +119,7 @@ export async function GET(req: Request) {
           total,
           limit: take,
           offset: skip,
-          hasMore: skip ? skip + residuos.length < total : residuos.length === take,
+          hasMore: skip ? skip + residuosValidos.length < total : residuosValidos.length === take,
         },
       },
       { status: 200 }

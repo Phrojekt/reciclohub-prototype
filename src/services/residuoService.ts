@@ -92,11 +92,21 @@ export class ResiduoService {
   // Buscar um resíduo específico por ID
   static async getResiduoById(id: number) {
     try {
-      const response = await fetchWithTimeout(`${this.baseUrl}/consult-residues`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }), timeout: 8000, retries: 2 })
-      return await response.json()
+      const response = await fetchWithTimeout(`${this.baseUrl}/consult-residue?id=${id}`, { 
+        method: 'GET',
+        timeout: 8000, 
+        retries: 2 
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      return { success: true, data }
     } catch (error) {
       console.error('Erro ao buscar resíduo:', error)
-      throw error
+      return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' }
     }
   }
 

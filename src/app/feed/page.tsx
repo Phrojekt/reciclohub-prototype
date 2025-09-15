@@ -1,6 +1,9 @@
 "use client"
 import { Search } from "lucide-react"
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from 'next/navigation'
+import Link from "next/link"
+import Image from "next/image"
 import { getSocket, onDataUpdated } from "@/lib/socket"
 import { getCache, setCache, isStale } from "@/lib/cache"
 import { ResiduoService, type Residuo } from "@/services/residuoService"
@@ -34,6 +37,7 @@ interface DashboardMetrics {
 }
 
 export default function FeedPage() {
+  const router = useRouter()
   const [residuos, setResiduos] = useState<Residuo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -230,22 +234,9 @@ export default function FeedPage() {
     }
   }
 
-  // Função para abrir modal de proposta 
-  const handleMakeProposal = (residuo: Residuo) => {
-    const empresaId = localStorage.getItem("empresaId")
-    if (!empresaId) {
-      alert("Você precisa estar logado para fazer uma proposta")
-      return
-    }
-
-    // Verificar se não é a própria empresa
-    if (residuo.empresa.id === parseInt(empresaId)) {
-      alert("Você não pode fazer proposta para seu próprio resíduo")
-      return
-    }
-
-    setSelectedResidue(residuo)
-    setShowProposalModal(true)
+  // Função para navegar para página de detalhes do resíduo
+  const handleViewMore = (residuo: Residuo) => {
+    router.push(`/residues/${residuo.id}`)
   }
 
   // Função para fechar modal 
@@ -455,13 +446,19 @@ export default function FeedPage() {
                     style={{ minHeight: 320 }}
                   >
                     {/* Imagem do resíduo */}
-                    <div className="w-full h-40 bg-gray-200 flex items-center justify-center overflow-hidden rounded-t-2xl">
+                    <div className="w-full h-40 bg-gray-200 flex items-center justify-center overflow-hidden rounded-t-2xl relative">
                       {residuo.imagens.length > 0 ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={residuo.imagens[0].url}
                           alt={residuo.tipoResiduo}
-                          className="object-cover w-full h-full"
+                          fill
+                          className="object-cover"
+                          quality={100}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder-image.jpg';
+                          }}
                         />
                       ) : (
                         <div className="text-gray-400 text-center p-4">
@@ -478,7 +475,16 @@ export default function FeedPage() {
                           {residuo.tipoResiduo}
                         </h3>
                         <div className="flex justify-between text-gray-500 text-sm mb-2">
-                          <span className="line-clamp-1">{residuo.empresa.nome}</span>
+                          {residuo.empresa && residuo.empresa.id ? (
+                            <Link 
+                              href={`/user/${residuo.empresa.id}`}
+                              className="line-clamp-1 hover:text-teal-600 hover:underline transition-colors cursor-pointer"
+                            >
+                              {residuo.empresa.nome}
+                            </Link>
+                          ) : (
+                            <span className="line-clamp-1 text-gray-400">Empresa não disponível</span>
+                          )}
                           <span>{residuo.quantidade} {residuo.unidade.toLowerCase()}</span>
                         </div>
                         <p className="text-gray-600 text-sm line-clamp-2 mb-2">
@@ -495,9 +501,9 @@ export default function FeedPage() {
                         </span>
                         <button
                           className="bg-teal-600 hover:cursor-pointer hover:bg-teal-700 text-white text-xs font-semibold rounded-lg px-4 py-2 shadow transition"
-                          onClick={() => handleMakeProposal(residuo)}
+                          onClick={() => handleViewMore(residuo)}
                         >
-                          Fazer Proposta
+                          Ver mais
                         </button>
                       </div>
                     </div>
