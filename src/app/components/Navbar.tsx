@@ -3,7 +3,8 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import Image from "next/image"
 import { LogOut, Menu } from "lucide-react"
-import { useState } from "react"
+import NotificationsMenu from "./NotificationsMenu"
+import { useState, useEffect } from "react"
 
 const navItems = [
   { label: "Feed", href: "/feed" },
@@ -17,6 +18,19 @@ export default function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [user, setUser] = useState<{ nome?: string; avatarUrl?: string } | null>(null)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        setUser(parsed)
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -95,29 +109,33 @@ export default function Navbar() {
       {/* Navbar mobile */}
       <header className="md:hidden fixed top-0 left-0 w-full h-16 bg-[#03A2AA] flex items-center justify-between px-4 z-40">
         <Image
-          src="/RECICLOHUB_White.png"
+          src="/reciclohub.newLogoWhite.svg"
           alt="RecicloHub"
-          width={110}
+          width={160}
           height={32}
           className="object-contain"
         />
-        <button
-          className="text-white"
-          aria-label="Abrir menu"
-          onClick={() => setMobileOpen(true)}
-        >
-          <Menu className="w-8 h-8" />
-        </button>
+        <div className="flex items-center gap-3">
+          <NotificationsMenu buttonClass="p-2 rounded-full text-white hover:bg-white/10" iconClass="text-white" />
+
+          <button
+            className="text-white"
+            aria-label="Abrir menu"
+            onClick={() => setMobileOpen(true)}
+          >
+            <Menu className="w-8 h-8" />
+          </button>
+        </div>
       </header>
 
       {/* Dropmenu mobile */}
       {mobileOpen && (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col">
+  <div className="fixed inset-0 bg-white z-50 flex flex-col min-h-0">
           <div className="flex items-center justify-between px-6 py-6 border-b border-gray-100">
             <Image
-              src="/RECICLOHUB_Green.png"
+              src="/reciclohub.newLogo.svg"
               alt="RecicloHub"
-              width={120}
+              width={160}
               height={40}
               className="object-contain"
             />
@@ -137,7 +155,24 @@ export default function Navbar() {
               </svg>
             </button>
           </div>
-          <nav className="flex-1 flex flex-col gap-2 px-8 py-8">
+
+          {/* User info block inside mobile menu (styled like sidebar nav item, disabled) */}
+          <div className="px-8 py-4">
+            <div className="px-8 py-3 text-base font-medium flex flex-col items-center text-gray-700">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden mb-3">
+                {user && user.avatarUrl ? (
+                  <Image src={user.avatarUrl} alt={user.nome || 'Usuário'} width={64} height={64} className="object-cover" />
+                ) : (
+                  <div className="w-16 h-16 flex items-center justify-center text-lg font-semibold text-gray-600">
+                    {user && user.nome ? user.nome.trim().charAt(0).toUpperCase() : 'U'}
+                  </div>
+                )}
+              </div>
+              <div className="text-gray-900 font-medium">{user?.nome ?? 'Usuário'}</div>
+            </div>
+            <div className="mt-3 border-b border-gray-100" />
+          </div>
+          <nav className="flex-1 flex flex-col gap-2 px-8 py-8 overflow-y-auto min-h-0">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -165,16 +200,18 @@ export default function Navbar() {
               <LogOut className="w-5 h-5 mr-2" />
               Logout
             </button>
+
+            {/* Footer logo as part of scrollable content */}
+            <div className="pt-8 flex items-center justify-center">
+              <Image
+                src="/reciclohubShortlogo.svg"
+                alt="Hub"
+                width={80}
+                height={80}
+                className="object-contain"
+              />
+            </div>
           </nav>
-          <div className="px-8 py-8 flex items-center justify-center">
-            <Image
-              src="/reciclohubShortlogo.svg"
-              alt="Hub"
-              width={80}
-              height={80}
-              className="object-contain"
-            />
-          </div>
         </div>
       )}
     </>

@@ -155,7 +155,7 @@ export default function EditResiduePage() {
               <option value="">Selecione</option>
               <option value="venda">Venda</option>
               <option value="doacao">Doação</option>
-              <option value="retirada">Retirada</option>
+              <option value="troca">Troca</option>
             </select>
           </div>
           <div>

@@ -66,7 +66,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       )
     })
 
-    server.io = io
+  // Expose io globally so app routes can emit events without needing NextApiResponse
+  // Use a typed assertion to avoid `any` lint rules
+    ;(globalThis as unknown as { io?: IOServer }).io = io
+      server.io = io ?? undefined
   }
   res.end()
 }

@@ -182,6 +182,24 @@ export default function ChatPage() {
   }
   const lastAtBottomRef = useRef<Record<string, boolean>>({})
 
+  // Fix for mobile viewport 100vh issue (address landscape/mobile browser chrome) by
+  // setting a CSS variable `--vh` based on window.innerHeight. We use this variable
+  // in place of `100vh` where needed so the layout won't be cut off in landscape mode.
+  useEffect(() => {
+    function setVh() {
+      try {
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`)
+      } catch {}
+    }
+    setVh()
+    window.addEventListener('resize', setVh)
+    window.addEventListener('orientationchange', setVh)
+    return () => {
+      window.removeEventListener('resize', setVh)
+      window.removeEventListener('orientationchange', setVh)
+    }
+  }, [])
+
   // Auto-scroll behavior: when messages change for the selected chat, scroll to bottom
   // Use layout effect to ensure DOM is updated before measuring/scrolling
   // Compute primitive values for dependencies to keep dependency array size constant
@@ -381,7 +399,7 @@ export default function ChatPage() {
             if (mapped.length === 0 && Array.isArray(match.messages) && match.messages.length > 0) return match
             return { ...match, messages: mapped, lastMessage: lastMessageContent || match.lastMessage, unread: 0 }
           }))
-          try { if (mapped.length > 0) setCache(cacheKey, mapped) } catch {}
+          try { if (mapped.length > 0) setCache(cacheKey, uniqMessages(mapped)) } catch {}
         })
         .finally(() => {
           loadingMessages.current[selectedChat] = false
@@ -419,7 +437,7 @@ export default function ChatPage() {
             if (mapped.length === 0 && Array.isArray(match.messages) && match.messages.length > 0) return match
             return { ...match, messages: mapped, lastMessage: lastMessageContent || match.lastMessage, unread: 0 }
           }))
-          try { if (mapped.length > 0) setCache(cacheKey, mapped) } catch {}
+          try { if (mapped.length > 0) setCache(cacheKey, uniqMessages(mapped)) } catch {}
         })
         .finally(() => {
           loadingMessages.current[selectedChat] = false
@@ -482,7 +500,7 @@ export default function ChatPage() {
       } else {
         updatedCache = [newMsg]
       }
-      setCache(cacheKey, updatedCache)
+  setCache(cacheKey, uniqMessages(updatedCache))
     } catch {
       // ignore cache errors
     }
@@ -617,13 +635,13 @@ export default function ChatPage() {
         const cacheKey = `chat_history_${selectedMatch.id}`
         const cached = getCache<Message[]>(cacheKey)
         const userIdNum = Number(userId)
-        const appended = Array.isArray(cached?.value) ? [...cached!.value, {
+        const appended = Array.isArray(cached?.value) ? uniqMessages([...cached!.value, {
           id: 0,
           sender: 'me',
           content: message.trim(),
           timestamp: outgoingMessage.timestamp,
           senderId: userIdNum
-        }] : [{ id: 0, sender: 'me', content: message.trim(), timestamp: outgoingMessage.timestamp, senderId: userIdNum }]
+        }]) : uniqMessages([{ id: 0, sender: 'me', content: message.trim(), timestamp: outgoingMessage.timestamp, senderId: userIdNum }])
         setCache(cacheKey, appended)
       } catch {
         // ignore cache errors
@@ -650,7 +668,7 @@ export default function ChatPage() {
     return (
       <PageTitleProvider title="Conversas">
         <div className="min-h-screen">
-          <div className="max-w-7xl mx-auto h-[calc(100vh-80px)] flex mt-2">
+          <div className="max-w-7xl mx-auto flex sm:mt-0 md:mt-2" style={{ height: `calc(var(--vh, 1vh) * 100 - 80px)` }}>
             <div className={`w-full md:w-1/3 bg-white border-r`}>
               <div className="p-4 border-b bg-white">
                 <h2 className="text-lg font-semibold text-gray-900 mb-3">Conversas</h2>
@@ -683,11 +701,15 @@ export default function ChatPage() {
   return (
     <PageTitleProvider title="Conversas">
       {/* ALTERAÇÃO VISUAL: Container principal com fundo mais claro, estilo WhatsApp */}
-      <div className="min-h-screen" >
-        <div className="max-w-7xl mx-auto h-[calc(100vh-80px)] flex mt-2">
+  <div className="min-h-screen">
+        {/* When a chat is selected on small screens we render a fixed full-screen overlay so the chat
+            takes the whole viewport and only the messages panel scrolls. On md+ we keep the original
+            centered layout. */}
+        <div className={`${selectedChat ? 'fixed inset-0 z-40 bg-white' : ''} w-full`}>
+          <div className={`max-w-7xl mx-auto ${selectedChat ? 'h-full' : ''} flex mt-2`} style={!selectedChat ? { height: `calc(var(--vh, 1vh) * 100 - 80px)` } : undefined}> 
           
           {/* ALTERAÇÃO VISUAL: Chat List - Fundo branco conforme solicitado */}
-          <div className={`w-full md:w-1/3 bg-white border-r ${selectedChat ? "hidden md:block" : ""}`}>
+          <div className={`w-full md:w-1/3 bg-white border-r ${selectedChat ? "hidden md:block" : ""} h-full`}>
             
             {/* ALTERAÇÃO VISUAL: Header da lista com busca */}
             <div className="p-4 border-b bg-white">
@@ -757,18 +779,20 @@ export default function ChatPage() {
           </div>
 
           {/* ALTERAÇÃO VISUAL: Chat Area com fundo personalizado */}
-          <div className={`flex-1 flex flex-col ${!selectedChat ? "hidden md:flex" : ""}`}>
+          {/* Chat area: on small screens when a chat is selected we show this pane full-screen (no body scroll)
+              header and input have fixed heights and messages area is the only scrolling container */}
+          <div className={`flex-1 flex flex-col h-full ${!selectedChat ? "hidden md:flex" : ""} ${selectedChat ? 'w-full md:w-auto' : ''}`}>
             {selectedChat && selectedMatch ? (
               <>
                 {/* Chat Header mantido igual */}
-                <div className="bg-white border-b p-4 flex items-center justify-between">
+                <div className="bg-white border-b p-4 flex items-center justify-between h-16 flex-shrink-0">
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => setSelectedChat(null)}
                       className="md:hidden p-2 rounded hover:bg-gray-100"
                     >
-                      <ArrowLeft className="w-5 h-5" />
+                      <ArrowLeft className="w-5 h-5 text-teal-600" />
                     </button>
                     <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center text-white font-bold">
                       {selectedMatch.wasteType[0]?.toUpperCase() || "R"}
@@ -785,7 +809,7 @@ export default function ChatPage() {
 
                 {/* ALTERAÇÃO VISUAL: Messages com fundo personalizado e cores das mensagens */}
                 <div 
-                  className="flex-1 overflow-y-auto p-4 space-y-4 relative"
+                  className="flex-1 overflow-y-auto p-4 space-y-4 relative h-full"
                   style={{ backgroundColor: '#abd7d8' }}
                   ref={el => { messagesContainerRef.current = el }}
                   onScroll={() => {
@@ -824,7 +848,7 @@ export default function ChatPage() {
                             backgroundColor: msg.sender === "me" ? "#D1FF66" : "#F5F5F5"
                           }}
                         >
-                          <p className="text-sm">{msg.content}</p>
+                          <p className="text-sm break-words whitespace-pre-wrap">{msg.content}</p>
                           <p className="text-xs mt-1 text-gray-600">
                             {msg.timestamp}
                           </p>
@@ -851,19 +875,21 @@ export default function ChatPage() {
                 </div>
 
                 {/* Message Input mantido igual */}
-                <div className="bg-white border-t p-4">
-                  <div className="flex gap-2">
+                <div className="bg-white border-t p-4 h-16 flex items-center flex-shrink-0">
+                  <div className="flex gap-2 w-full min-w-0 items-center">
                     <input
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="Digite sua mensagem..."
                       onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                      className="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-black"
+                      className="flex-1 min-w-0 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-black h-10"
+                      style={{ maxWidth: 'calc(100% - 56px)' }}
                     />
                     <button
                       type="button"
                       onClick={handleSendMessage}
-                      className="bg-teal-600 hover:bg-teal-700 text-white rounded px-4 py-2 flex items-center justify-center"
+                      className="bg-teal-600 hover:bg-teal-700 text-white rounded px-3 py-2 flex items-center justify-center flex-shrink-0"
+                      style={{ width: 48, height: 40 }}
                     >
                       <Send className="w-4 h-4" />
                     </button>
@@ -884,6 +910,34 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+    </div>
     </PageTitleProvider>
   )
+}
+
+// Normalize and deduplicate message arrays.
+// Prefere mensagens com id > 0 (servidor) sobre id === 0 (optimistic).
+function uniqMessages(arr: Message[] = []): Message[] {
+  const seen = new Map<string, Message>()
+  for (const m of arr) {
+    const key = m.id && m.id > 0 ? `id:${m.id}` : `c:${m.senderId || ''}:${m.content}:${m.timestamp}`
+    if (key.startsWith('id:')) {
+      seen.set(key, m)
+    } else {
+      if (!seen.has(key)) seen.set(key, m)
+    }
+  }
+  // Now produce array preserving original order by filtering original array and picking entries from map once
+  const out: Message[] = []
+  const added = new Set<string>()
+  for (const m of arr) {
+    const key = m.id && m.id > 0 ? `id:${m.id}` : `c:${m.senderId || ''}:${m.content}:${m.timestamp}`
+    if (added.has(key)) continue
+    const val = seen.get(key)
+    if (val) {
+      out.push(val)
+      added.add(key)
+    }
+  }
+  return out
 }

@@ -20,20 +20,10 @@ export default function OrientationController() {
       // Mostrar warning se for mobile E landscape
       setShowWarning(isMobile && isLandscape);
       
-      // Forçar bloqueio do scroll e interação
-      if (isMobile && isLandscape) {
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
-        document.body.style.height = '100%';
-      } else {
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.height = '';
-      }
+      // Do not forcibly lock body scroll here — locking caused the overlay
+      // to cut the viewport on some devices. We'll allow the overlay to be
+      // presented while keeping the page scrollable; the inner modal will
+      // be scrollable instead so the user can read all content.
     };
 
     // Verificação inicial
@@ -84,6 +74,22 @@ export default function OrientationController() {
     forceLock();
   }, []);
 
+  // Ensure --vh is set for correct viewport height calculations (overlay sizing)
+  useEffect(() => {
+    function setVh() {
+      try {
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`)
+      } catch {}
+    }
+    setVh()
+    window.addEventListener('resize', setVh)
+    window.addEventListener('orientationchange', setVh)
+    return () => {
+      window.removeEventListener('resize', setVh)
+      window.removeEventListener('orientationchange', setVh)
+    }
+  }, [])
+
   if (!showWarning) {
     return null;
   }
@@ -91,7 +97,7 @@ export default function OrientationController() {
   return (
     <>
       {/* Overlay completo */}
-      <div 
+      <div
         className="fixed inset-0 z-[99999] bg-gradient-to-br from-[#00A2AA] to-[#00757B]"
         data-orientation-controller="true"
         style={{
@@ -99,15 +105,21 @@ export default function OrientationController() {
           top: 0,
           left: 0,
           width: '100vw',
-          height: '100vh',
+          height: `calc(var(--vh, 1vh) * 100)`,
           zIndex: 99999,
-          pointerEvents: 'all'
+          pointerEvents: 'auto'
         }}
       >
-        <div className="absolute inset-0 flex items-center justify-center p-3 overflow-hidden">
-          <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl w-full max-w-xs max-h-full overflow-y-auto">
+        <div className="absolute inset-0 flex items-center justify-center p-3">
+          <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl w-full max-w-lg mx-auto box-border flex flex-col"
+               style={{
+                 // Use a larger portion of the viewport so card appears taller
+                 maxHeight: `calc(var(--vh, 1vh) * 92)`,
+                 minHeight: `calc(var(--vh, 1vh) * 56)`,
+                 WebkitOverflowScrolling: 'touch'
+               }}>
             {/* Header compacto */}
-            <div className="px-4 py-3 text-center border-b border-gray-100">
+            <div className="px-6 py-4 text-center border-b border-gray-100">
               <div className="flex items-center justify-center mb-2">
                 <div className="relative">
                   <div className="w-12 h-16 bg-gray-800 rounded-lg flex items-center justify-center">
@@ -128,8 +140,8 @@ export default function OrientationController() {
               </h2>
             </div>
             
-            {/* Conteúdo principal */}
-            <div className="px-4 py-3 space-y-3">
+            {/* Conteúdo principal (scrollable) */}
+            <div className="px-6 py-4 space-y-4 overflow-y-auto" style={{minHeight:0}}>
               <p className="text-sm text-gray-600 text-center leading-relaxed">
                 O RecicloHub funciona melhor no modo <span className="font-semibold text-[#00A2AA]">vertical</span>
               </p>
@@ -151,7 +163,7 @@ export default function OrientationController() {
             </div>
             
             {/* Footer minimalista */}
-            <div className="px-4 py-2 text-center border-t border-gray-100">
+            <div className="px-4 py-2 text-center border-t border-gray-100 flex-shrink-0">
               <div className="flex items-center justify-center space-x-1">
                 <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></div>
                 <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>

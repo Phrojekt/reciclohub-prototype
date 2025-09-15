@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
+import type { Server as IOServer } from "socket.io"
 
 const prisma = new PrismaClient()
 
@@ -82,6 +83,24 @@ export async function PATCH(req: Request) {
       }
     })
 
+    // Emit socket event for the proponente
+    try {
+      const io = (globalThis as unknown as { io?: IOServer }).io
+      if (io) {
+        io.to(String(proposta.empresaProponente.id)).emit('notification', {
+          tipo: tipoNotificacao,
+          titulo: tituloNotificacao,
+          mensagem: mensagemNotificacao,
+          empresaId: proposta.empresaProponente.id,
+          propostaId: proposta.id,
+          createdAt: new Date()
+        })
+        io.emit('data-updated', { resource: 'notificacoes', action: 'created', id: proposta.id })
+      }
+    } catch (e) {
+      console.warn('Socket emit failed (respond-proposal):', e)
+    }
+
 
     // Se foi aceita, criar notificação de match para ambos os lados
     if (acao === 'aceitar') {
@@ -105,6 +124,22 @@ export async function PATCH(req: Request) {
           propostaId: proposta.id
         }
       })
+      try {
+        const io = (globalThis as unknown as { io?: IOServer }).io
+        if (io) {
+          io.to(String(proposta.empresaReceptora.id)).emit('notification', {
+            tipo: 'MATCH_CONFIRMADO',
+            titulo: 'Match confirmado!',
+            mensagem: `Você tem um match com ${proposta.empresaProponente.nome}`,
+            empresaId: proposta.empresaReceptora.id,
+            propostaId: proposta.id,
+            createdAt: new Date()
+          })
+          io.emit('data-updated', { resource: 'notificacoes', action: 'created', id: proposta.id })
+        }
+      } catch (e) {
+        console.warn('Socket emit failed (respond-proposal match):', e)
+      }
     }
 
     return NextResponse.json({ 

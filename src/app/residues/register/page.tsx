@@ -23,21 +23,29 @@ export default function CadastrarResiduoPage() {
   const [imageProcessingProgress, setImageProcessingProgress] = useState({ current: 0, total: 0 })
 
   const tiposResiduos = [
-    "Plástico PET",
-    "Plástico PEAD",
-    "Plástico PVC",
-    "Plástico PEBD",
-    "Plástico PP",
-    "Plástico PS",
-    "Papel e Papelão",
-    "Metal Ferroso",
-    "Metal Não-Ferroso",
-    "Vidro",
-    "Madeira",
-    "Têxtil",
-    "Eletrônicos",
-    "Orgânico",
-    "Outros",
+    "Lodo têxtil (de ETE)",
+    "Banhos de soda cáustica (mercerização)",
+    "Sais de tingimento (NaCl, Na₂SO₄)",
+    "Corantes e pigmentos fora de especificação",
+    "Retalhos de algodão (pré-consumo)",
+    "Retalhos de poliéster (PET)",
+    "Retalhos de mistos (algodão + poliéster, algodão + viscose etc.)",
+    "Noil de algodão (resíduo do penteado)",
+    "Droppings de carda",
+    "Pó de fibra (algodão, viscose, poliéster)",
+    "Fios fora de especificação",
+    "Cones plásticos",
+    "Tubetes de papel",
+    "Embalagens plásticas (filme stretch, sacos)",
+    "Embalagens de papel/papelão",
+    "Pallets de madeira",
+    "Lascas e aparas de tecidos (tecelagem/malharia)",
+    "Poeira de corte (corte de tecidos)",
+    "Água de lavagem contendo amido (engomagem)",
+    "Resíduos de goma e pastas de estamparia",
+    "Resíduos de amaciantes, óleos e ceras",
+    "Lama química da purga/alvejamento",
+    "Cinzas de caldeira a biomassa (quando utilizada para vapor em beneficiamento)",
   ]
 
   const unidades = [
@@ -407,15 +415,15 @@ export default function CadastrarResiduoPage() {
                     <div className="flex items-center space-x-2">
                       <input
                         type="radio"
-                        id="retirada"
+                        id="troca"
                         name="disponibilidade"
-                        value="retirada"
-                        checked={residuoData.disponibilidade === "retirada"}
+                        value="troca"
+                        checked={residuoData.disponibilidade === "troca"}
                         onChange={(e) => handleInputChange("disponibilidade", e.target.value)}
                         className="text-teal-600 focus:ring-teal-500"
                       />
-                      <label htmlFor="retirada" className="text-gray-700 cursor-pointer">
-                        Retirada por Terceiro
+                      <label htmlFor="troca" className="text-gray-700 cursor-pointer">
+                        Troca
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -443,23 +451,20 @@ export default function CadastrarResiduoPage() {
                         className="text-teal-600 focus:ring-teal-500"
                       />
                       <label htmlFor="venda" className="text-gray-700 cursor-pointer">
-                        Venda (Especificar Preço Abaixo)
+                        Venda
                       </label>
                     </div>
                   </div>
                 </div>
 
-                {/* LINHA 5: Preço (input abaixo do label) */}
+                {/* LINHA 5: Preço (visível apenas para venda) */}
                 <div className="space-y-2">
-                  <label htmlFor="preco" className="text-gray-700 font-medium">
-                    Preço {residuoData.disponibilidade !== "venda" && "(Opcional)"}
-                  </label>
+                  <label className="text-gray-700 font-medium">Preço {residuoData.disponibilidade !== "venda" && "(Opcional)"}</label>
                   <input
-                    id="preco"
                     type="text"
                     value={residuoData.preco}
                     onChange={(e) => handleInputChange("preco", e.target.value)}
-                    className="w-full bg-gray-100 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 text-gray-700 focus:ring-teal-500 placeholder-gray-400 disabled:bg-gray-200 disabled:text-gray-400"
+                    className="w-full bg-gray-100 border text-gray-700 border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder-gray-400"
                     placeholder="Ex: R$ 2,50 por kg"
                     disabled={residuoData.disponibilidade !== "venda"}
                   />

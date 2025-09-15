@@ -148,17 +148,13 @@ export default function PropostasRecebidasPage() {
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, idx) => (
               <div key={idx} className="bg-white rounded-lg border p-6 animate-pulse">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gray-100 rounded-full" />
                     <div>
                       <div className="h-5 bg-gray-100 rounded w-48 mb-2" />
                       <div className="h-3 bg-gray-100 rounded w-40" />
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="h-4 bg-gray-100 rounded w-24 ml-auto" />
-                    <div className="h-3 bg-gray-100 rounded w-20 mt-2" />
                   </div>
                 </div>
 
@@ -199,10 +195,7 @@ export default function PropostasRecebidasPage() {
                   <div className="h-4 bg-gray-100 rounded w-full" />
                 </div>
 
-                <div className="flex gap-3 pt-4 border-t">
-                  <div className="h-10 bg-gray-100 rounded w-1/2" />
-                  <div className="h-10 bg-gray-100 rounded w-1/2" />
-                </div>
+                {/* actions placeholders removed to avoid visual artifacts */}
               </div>
             ))}
           </div>

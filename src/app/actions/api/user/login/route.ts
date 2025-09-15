@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
 
 const prisma = new PrismaClient()
+
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret"
 
 export async function POST(req: Request) {
   try {
@@ -28,13 +31,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Senha incorreta." }, { status: 401 })
     }
 
-    // Retorna dados essenciais (nunca envie a senha!)
-    return NextResponse.json({
-      id: user.id,
-      email: user.email,
-      nome: user.nome,
-      empresaId: user.id // ou user.empresaId, se existir esse campo
-    }, { status: 200 })
+    // Criar JWT com claims mínimos
+    const token = jwt.sign({ sub: String(user.id), empresaId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' })
+
+    // Configurar cookie seguro (httpOnly). Em desenvolvimento `secure` fica false
+    const secure = process.env.NODE_ENV === 'production'
+    const cookie = `token=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax${secure ? '; Secure' : ''}`
+
+    const res = NextResponse.json({ id: user.id, email: user.email, nome: user.nome, empresaId: user.id }, { status: 200 })
+    res.headers.set('Set-Cookie', cookie)
+    return res
 
   } catch (error) {
     console.error(error)

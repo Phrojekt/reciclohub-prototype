@@ -63,79 +63,64 @@ input[type="password"]::-webkit-input-decoration-container {
 }
 
 /* Mobile Portrait Mode Only - Bloqueio Agressivo */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 768px) and (orientation: portrait) {
   /* Forçar orientação portrait em dispositivos móveis */
   html, body {
     overflow-x: hidden;
     width: 100vw;
+    height: calc(var(--vh, 1vh) * 100);
   }
 }
 
-/* Bloqueio total em landscape mode */
+/* Landscape on small devices: show a non-blocking overlay if the page provides an
+   orientation controller (optional), but DO NOT hide or fix the whole app. The
+   previous aggressive approach caused content cutoff and horizontal scrolling.
+   We keep `overflow-x: hidden` to avoid accidental horizontal scroll. */
 @media screen and (orientation: landscape) and (max-width: 768px) {
   html, body {
-    overflow: hidden !important;
-    position: fixed !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    touch-action: none !important;
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
+    /* allow horizontal scrolling so users can pan to see cut content */
+    overflow-x: auto;
+    overflow-y: auto;
+    height: calc(var(--vh, 1vh) * 100);
+    -webkit-overflow-scrolling: touch;
   }
-  
-  /* Bloquear TODOS os elementos exceto o controlador de orientação */
-  body > *:not([data-orientation-controller]) {
-    display: none !important;
-    pointer-events: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-  }
-  
-  /* Garantir que o controlador seja sempre visível e otimizado para landscape */
+  /* If an orientation controller element is present, make it available as a
+     helpful overlay without hiding other content. Authors can opt-in by
+     rendering a `div[data-orientation-controller]` element. */
+  /* Orientation controller is presented as a helpful overlay but should not block
+     scrolling or prevent the user from exploring content. We default to a translucent
+     overlay that doesn't intercept pointer events unless its children require it. */
   div[data-orientation-controller] {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
-    pointer-events: all !important;
+    pointer-events: auto !important; /* overlay should capture events so inner modal can scroll */
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    z-index: 99999 !important;
+    z-index: 9999 !important;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.15);
   }
-  
-  /* Otimizações específicas para o modal em landscape */
-  div[data-orientation-controller] > div {
-    padding: 8px !important;
-    overflow: visible !important;
-  }
-  
-  /* Garantir que o conteúdo do modal seja sempre visível */
-  div[data-orientation-controller] .bg-white\/95 {
-    max-height: calc(100vh - 16px) !important;
-    overflow-y: auto !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-  }
-  
-  div[data-orientation-controller] .bg-white\/95::-webkit-scrollbar {
-    display: none !important;
+
+  /* let inner controller content be interactive if needed */
+  div[data-orientation-controller] > * {
+    pointer-events: auto !important;
+    margin: 12px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow: auto;
   }
 }
 
-/* Detecção adicional por altura/largura */
+/* Detecção adicional por altura/largura: if extremely short viewports occur we avoid
+   disabling the app; instead suggest the orientation controller but keep UI usable. */
 @media screen and (max-height: 500px) and (min-width: 500px) {
   html, body {
-    overflow: hidden !important;
-    position: fixed !important;
-    touch-action: none !important;
-  }
-  
-  body > *:not([data-orientation-controller]) {
-    display: none !important;
+    overflow-x: hidden;
   }
 }
 

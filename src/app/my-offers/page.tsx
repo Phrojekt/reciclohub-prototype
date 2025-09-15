@@ -217,7 +217,6 @@ export default function MyOffersPage() {
 
   const formatPrice = (preco?: string, disponibilidade?: string) => {
     if (disponibilidade === "doacao") return "Gratuito"
-    if (disponibilidade === "retirada") return "Retirada no Local"
     return preco ? `R$ ${preco}` : "Sob consulta"
   }
 
@@ -227,8 +226,8 @@ export default function MyOffersPage() {
         return "text-green-600 bg-green-50"
       case "doacao":
         return "text-blue-600 bg-blue-50"
-      case "retirada":
-        return "text-orange-600 bg-orange-50"
+      case "troca":
+        return "text-purple-600 bg-purple-50"
       default:
         return "text-gray-600 bg-gray-50"
     }
@@ -240,8 +239,8 @@ export default function MyOffersPage() {
         return "À venda"
       case "doacao":
         return "Doação"
-      case "retirada":
-        return "Retirada"
+      case "troca":
+        return "Troca"
       default:
         return disponibilidade
     }
@@ -292,7 +291,7 @@ export default function MyOffersPage() {
 
   return (
     <div className="min-h-screen mt-8">
-      <div className="max-w-7xl mx-auto px-12 py-12 bg-white border rounded-xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-12 bg-white border rounded-xl">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
@@ -300,30 +299,30 @@ export default function MyOffersPage() {
               Gerencie seus resíduos cadastrados e visualize propostas recebidas
             </p>
           </div>
-          <div className="flex items-center gap-3 mt-4 md:mt-0">
+          <div className="grid grid-cols-2 gap-3 mt-4 md:flex md:items-center md:gap-3 md:mt-0">
             <button
               onClick={() => setMostrarFiltros(!mostrarFiltros)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+              className={`h-10 w-full text-sm font-medium rounded-lg transition flex items-center justify-center gap-2 ${
                 temFiltrosAtivos || mostrarFiltros
                   ? 'bg-teal-600 hover:bg-teal-700 text-white'
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
               <Filter className="w-5 h-5" />
-              Filtros
+              <span className="whitespace-nowrap">Filtros</span>
               {temFiltrosAtivos && (
                 <span className="bg-white text-blue-600 text-xs rounded-full px-2 py-1 font-bold">
                   {(filtroTipo ? 1 : 0) + (filtroStatus ? 1 : 0)}
                 </span>
               )}
             </button>
-            
+
             <button
               onClick={() => router.push("/residues/register")}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+              className="h-10 w-full text-sm font-medium rounded-lg transition bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-2 px-3"
             >
               <Plus className="w-5 h-5" />
-              Nova Oferta
+              <span className="whitespace-nowrap">Nova Oferta</span>
             </button>
           </div>
         </div>
@@ -388,64 +387,31 @@ export default function MyOffersPage() {
           </div>
         )}
 
-        {/* Loading: skeleton cards matching real card proportions */}
+        {/* Loading: skeleton cards (simplified & overflow-safe) */}
         {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, idx) => (
-              <div
-                key={idx}
-                className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-teal-300 hover:-translate-y-1"
-                style={{ minHeight: 420 }}
-              >
-                {/* image placeholder */}
-                <div className="relative w-full h-40 bg-gray-200 flex items-center justify-center overflow-hidden animate-pulse">
-                  <div className="w-full h-full bg-gray-100" />
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div key={idx} className="bg-white rounded-lg border p-6 animate-pulse overflow-hidden min-w-0">
+                <div className="flex items-start mb-4 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="h-5 bg-gray-100 rounded mb-2 max-w-[60%]" />
+                      <div className="h-3 bg-gray-100 rounded max-w-[45%]" />
+                    </div>
+                  </div>
                 </div>
 
-                {/* content placeholder */}
-                <div className="flex-1 flex flex-col p-4">
-                  <div className="mb-3">
-                    <div className="h-6 bg-gray-100 rounded w-3/4 mb-1 animate-pulse" />
-                    <div className="h-3 bg-gray-100 rounded w-full mb-2 animate-pulse" />
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <div className="h-3 bg-gray-100 rounded w-3/4 mb-1 animate-pulse" />
-                        <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse" />
-                      </div>
-                      <div>
-                        <div className="h-3 bg-gray-100 rounded w-3/4 mb-1 animate-pulse" />
-                        <div className="h-4 bg-gray-100 rounded w-1/2 animate-pulse" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-gray-200 rounded-full animate-pulse" />
-                      <div className="h-3 bg-gray-100 rounded w-1/3 animate-pulse" />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-gray-100 rounded-full animate-pulse" />
-                        <div className="h-3 bg-gray-100 rounded w-1/4 animate-pulse" />
-                      </div>
-                      <div className="h-3 bg-gray-100 rounded w-1/6 animate-pulse" />
-                    </div>
-                  </div>
-
-                  <div className="text-center mb-4 py-2">
-                    <div className="h-8 bg-gray-100 rounded w-1/2 mx-auto animate-pulse" />
-                  </div>
-
-                  <div className="mt-auto space-y-2">
-                    <div className="h-12 bg-gray-100 rounded-lg w-full animate-pulse" />
-                    <div className="h-12 bg-gray-100 rounded-lg w-full animate-pulse" />
-                  </div>
+                <div className="space-y-3 mb-4 min-w-0">
+                  <div className="h-4 bg-gray-100 rounded max-w-[70%]" />
+                  <div className="h-3 bg-gray-100 rounded max-w-[50%]" />
                 </div>
+
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="h-4 bg-gray-100 rounded w-full max-w-[90%]" />
+                </div>
+
+                {/* Intentionally removed right-side status/date placeholders and bottom action bars to prevent overflow */}
               </div>
             ))}
           </div>
@@ -555,26 +521,40 @@ export default function MyOffersPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 min-w-0">
               {/* 🆕 USAR ofertasFiltradas EM VEZ DE offers */}
               {ofertasFiltradas.map((offer) => (
                 <div
-                  key={offer.id}
-                  className="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-teal-300 hover:-translate-y-1"
-                  style={{ minHeight: 420 }}
-                >
+                    key={offer.id}
+                    className="bg-white border-2 border-[#00A2AA] rounded-xl shadow-sm flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-[#00757B] hover:-translate-y-1"
+                  >
                   {/* Image */}
-                  <div className="relative w-full h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <div className="relative w-full h-36 bg-gray-100 flex items-center justify-center overflow-hidden">
                     <ImageWithFallback offer={offer} />
 
-                    {/* Edit button */}
-                    <button
-                      onClick={() => handleEdit(offer.id)}
-                      className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white border border-gray-200 transition-all duration-200 hover:scale-105"
-                      title="Editar resíduo"
-                    >
-                      <Pencil className="w-4 h-4 text-teal-600" />
-                    </button>
+                    {/* Edit + Delete buttons (grouped) */}
+                    <div className="absolute top-3 right-3 flex items-center gap-2">
+                      <button
+                        onClick={() => handleEdit(offer.id)}
+                        className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white border border-gray-200 transition-all duration-200 hover:scale-105"
+                        title="Editar resíduo"
+                      >
+                        <Pencil className="w-4 h-4 text-teal-600" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(offer.id)}
+                        disabled={deletingId === offer.id}
+                        className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white border border-gray-200 transition-all duration-200 hover:scale-105"
+                        title="Excluir resíduo"
+                      >
+                        {deletingId === offer.id ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        )}
+                      </button>
+                    </div>
 
                     {/* Status badge */}
                     <div className="absolute top-3 left-3">
@@ -585,7 +565,7 @@ export default function MyOffersPage() {
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 flex flex-col p-4">
+                  <div className="flex-1 flex flex-col p-3 min-h-0">
                     {/* Header */}
                     <div className="mb-3">
                       <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">
@@ -597,7 +577,7 @@ export default function MyOffersPage() {
                     </div>
 
                     {/* Details section */}
-                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                    <div className="bg-gray-50 rounded-lg p-2 mb-3">
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                           <span className="text-gray-500 block text-xs mb-1">Quantidade</span>
@@ -657,7 +637,7 @@ export default function MyOffersPage() {
                     <div className="mt-auto space-y-2">
                       <button
                         onClick={() => handleViewProposals(offer.id)}
-                        className={`w-full text-sm font-medium rounded-lg px-4 py-3 transition-all duration-200 flex items-center justify-center gap-2 relative ${
+                        className={`w-full text-sm font-medium rounded-lg px-4 py-2 transition-all duration-200 flex items-center justify-center gap-2 relative ${
                           offer.propostasPendentes > 0
                             ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
                             : 'bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100'
@@ -672,21 +652,7 @@ export default function MyOffersPage() {
                         )}
                       </button>
                       
-                      <button
-                        onClick={() => handleDelete(offer.id)}
-                        disabled={deletingId === offer.id}
-                        className="w-full bg-gray-50 text-gray-600 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 disabled:opacity-50 text-sm font-medium rounded-lg px-4 py-2 transition-all duration-200 flex items-center justify-center gap-2"
-                        title="Excluir resíduo"
-                      >
-                        {deletingId === offer.id ? (
-                          <div className="animate-spin w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full" />
-                        ) : (
-                          <>
-                            <Trash2 className="w-4 h-4" />
-                            Excluir
-                          </>
-                        )}
-                      </button>
+                      {/* Removed large delete button — delete moved to top-right grouped buttons */}
                     </div>
                   </div>
                 </div>

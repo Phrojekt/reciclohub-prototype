@@ -257,7 +257,7 @@ export default function FeedPage() {
   // Formatar preço 
   const formatPrice = (preco: string | undefined, disponibilidade: string) => {
     if (disponibilidade === "doacao") return "Gratuito"
-    if (disponibilidade === "retirada") return "Retirada"
+    if (disponibilidade === "troca") return "Troca"
     return preco || "Preço não informado"
   }
 
@@ -383,13 +383,13 @@ export default function FeedPage() {
           )}
         </h1>
 
-        {/* Loading state: skeleton cards with centered green spinner */}
-        {loading && (
+        {/* Loading state: skeleton cards with centered green spinner - only when there are no residues yet */}
+        {loading && residuos.length === 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, idx) => (
               <div
                 key={idx}
-                className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden transition hover:shadow-md hover:border-teal-200"
+                className="bg-white border-2 border-[#00A2AA]/40 rounded-2xl shadow-sm flex flex-col overflow-hidden transition hover:shadow-md hover:border-[#00A2AA]"
                 style={{ minHeight: 320 }}
               >
                 {/* imagem placeholder - mantém h-40 */}
@@ -451,7 +451,7 @@ export default function FeedPage() {
                 {residuos.map((residuo) => (
                   <div
                     key={residuo.id}
-                    className="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden transition hover:shadow-md hover:border-teal-200"
+                    className="bg-white border-2 border-[#00A2AA] rounded-2xl shadow-sm flex flex-col overflow-hidden transition hover:shadow-md hover:border-[#00757B]"
                     style={{ minHeight: 320 }}
                   >
                     {/* Imagem do resíduo */}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
+import type { Server as IOServer } from "socket.io"
 
 const prisma = new PrismaClient()
 
@@ -82,6 +83,25 @@ export async function POST(req: Request) {
         propostaId: proposta.id
       }
     })
+
+    // Emitir evento de notificação via socket (se disponível)
+    try {
+      const io = (globalThis as unknown as { io?: IOServer }).io
+      if (io) {
+        io.to(String(residuo.empresaId)).emit('notification', {
+          tipo: 'NOVA_PROPOSTA',
+          titulo: 'Nova proposta recebida',
+          mensagem: `A empresa ${proposta.empresaProponente.nome} fez uma proposta para seu resíduo "${proposta.residuo.descricao}"`,
+          empresaId: residuo.empresaId,
+          propostaId: proposta.id,
+          createdAt: new Date()
+        })
+        // Also emit generic data-updated for caches
+        io.emit('data-updated', { resource: 'notificacoes', action: 'created', id: proposta.id })
+      }
+    } catch (e) {
+      console.warn('Socket emit failed (make-proposal):', e)
+    }
 
     return NextResponse.json({ 
       success: true, 
