@@ -61,6 +61,12 @@ function formatTimestamp(raw: unknown): string {
   }
 }
 
+// Helper para truncar texto com limite de caracteres
+function truncateText(text: string, maxLength: number): string {
+  if (!text || text.length <= maxLength) return text
+  return text.substring(0, maxLength).trim() + "..."
+}
+
 // Função fetchMatches mantida igual - não alteramos a lógica de dados
 async function fetchMatches(userId: string, selectedChatId?: string): Promise<Match[]> {
   try {
@@ -762,7 +768,7 @@ export default function ChatPage() {
                           <span className="text-xs text-gray-500">{match.timestamp}</span>
                         </div>
                         <p className="text-sm text-gray-600 truncate">{match.lastMessage}</p>
-                        <p className="text-xs text-teal-600">{match.company}</p>
+                        <p className="text-xs text-teal-600 truncate">{truncateText(match.company, 20)}</p>
                       </div>
                       {match.unread > 0 && (
                         <div className="ml-2 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
@@ -796,7 +802,7 @@ export default function ChatPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">{selectedMatch.wasteType}</h3>
-                      <p className="text-sm text-gray-600">{selectedMatch.company}</p>
+                      <p className="text-sm text-gray-600 truncate">{truncateText(selectedMatch.company, 25)}</p>
                     </div>
                   </div>
                   <button className="p-2 rounded hover:bg-gray-100">

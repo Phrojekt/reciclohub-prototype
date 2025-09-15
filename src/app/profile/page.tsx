@@ -116,18 +116,18 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <PageTitleProvider title="Perfil">
-        <div className="px-12 py-6">
+        <div className="px-4 sm:px-6 md:px-12 py-4 sm:py-6">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm p-8">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
               <div className="animate-pulse">
-                <div className="flex items-center space-x-4 mb-8">
-                  <div className="w-20 h-20 bg-gray-300 rounded-full"></div>
-                  <div className="space-y-2">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 mb-6 sm:mb-8">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded-full"></div>
+                  <div className="space-y-2 text-center sm:text-left">
                     <div className="h-6 bg-gray-300 rounded w-48"></div>
                     <div className="h-4 bg-gray-300 rounded w-32"></div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {[...Array(8)].map((_, i) => (
                     <div key={i} className="space-y-2">
                       <div className="h-4 bg-gray-300 rounded w-24"></div>
@@ -146,19 +146,19 @@ export default function ProfilePage() {
   if (error || !userProfile) {
     return (
       <PageTitleProvider title="Perfil">
-        <div className="px-12 py-6">
+        <div className="px-4 sm:px-6 md:px-12 py-4 sm:py-6">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <div className="text-6xl mb-4">⚠️</div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">
+            <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8 text-center">
+              <div className="text-4xl sm:text-6xl mb-4">⚠️</div>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">
                 {error || "Perfil não encontrado"}
               </h2>
-              <p className="text-gray-500 mb-6">
+              <p className="text-sm sm:text-base text-gray-500 mb-6">
                 Não foi possível carregar os dados do seu perfil.
               </p>
               <button
                 onClick={() => router.push('/feed')}
-                className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg transition-colors"
+                className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg transition-colors w-full sm:w-auto"
               >
                 Voltar ao Feed
               </button>
@@ -171,12 +171,12 @@ export default function ProfilePage() {
 
   return (
     <PageTitleProvider title="Perfil">
-      <div className="px-12 py-6">
+      <div className="px-4 sm:px-6 md:px-12 py-4 sm:py-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-teal-600 rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-teal-600 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl font-bold overflow-hidden">
                 {userProfile.avatarUrl ? (
                   <Image 
                     src={userProfile.avatarUrl} 
@@ -189,25 +189,25 @@ export default function ProfilePage() {
                   userProfile.nome.charAt(0).toUpperCase()
                 )}
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{userProfile.nome}</h1>
-                <p className="text-gray-600">{userProfile.email}</p>
+              <div className="text-center sm:text-left">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{userProfile.nome}</h1>
+                <p className="text-sm sm:text-base text-gray-600">{userProfile.email}</p>
               </div>
             </div>
             
             {!isEditing ? (
               <button
                 onClick={handleEdit}
-                className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition-colors"
+                className="flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
               >
                 <Edit3 className="w-4 h-4" />
                 Editar Perfil
               </button>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4" />
                   Cancelar
@@ -215,7 +215,7 @@ export default function ProfilePage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? "Salvando..." : "Salvar"}
@@ -225,12 +225,12 @@ export default function ProfilePage() {
           </div>
 
           {/* Profile Content */}
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Informações Pessoais</h2>
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 md:p-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Informações Pessoais</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Nome */}
-              <div>
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <User className="w-4 h-4 inline mr-2" />
                   Nome Completo
@@ -248,7 +248,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Email */}
-              <div>
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Mail className="w-4 h-4 inline mr-2" />
                   E-mail
@@ -400,13 +400,13 @@ export default function ProfilePage() {
             </div>
 
             {/* Endereço Completo */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Endereço Completo</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-900">
+            <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Endereço Completo</h3>
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                <p className="text-sm sm:text-base text-gray-900 leading-relaxed">
                   {userProfile.rua}, {userProfile.numero} - {userProfile.cidade}, {userProfile.estado}
                 </p>
-                <p className="text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">
                   CEP: {userProfile.cep} - {userProfile.pais}
                 </p>
               </div>

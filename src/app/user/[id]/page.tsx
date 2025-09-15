@@ -14,7 +14,6 @@ import {
   ArrowLeft
 } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 import { PageTitleProvider } from "@/app/components/MainLayout"
 
 interface PublicProfile {
@@ -367,12 +366,6 @@ export default function PublicProfilePage() {
                 <p className="text-[#5B5858]">Entre em contato com {profile.nome} através dos dados acima.</p>
               </div>
               <div className="flex gap-3">
-                <Link
-                  href={`/feed?empresa=${profile.empresa.id}`}
-                  className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Ver Resíduos
-                </Link>
                 {profile.empresa.email && (
                   <a
                     href={`mailto:${profile.empresa.email}`}

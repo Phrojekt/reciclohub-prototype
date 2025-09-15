@@ -252,7 +252,7 @@ export default function PropostasRecebidasPage() {
                         {proposta.empresaProponente && proposta.empresaProponente.id ? (
                           <Link 
                             href={`/user/${proposta.empresaProponente.id}`}
-                            className="font-medium text-gray-900 hover:text-teal-600 hover:underline transition-colors cursor-pointer"
+                            className="font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors cursor-pointer"
                           >
                             {proposta.empresaProponente.nome}
                           </Link>
