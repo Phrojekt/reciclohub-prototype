@@ -297,31 +297,30 @@ export default function Home() {
       </AnimatedSection>
 
       {/* Problem Section - Economia Circular */}
-      <AnimatedSection delay={0}>
-        <section className="relative py-16 md:py-24 bg-[#00A2AA] overflow-hidden">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 left-0 w-72 h-72 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/3 translate-y-1/3"></div>
-            <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-white rounded-full transform -translate-y-1/2"></div>
-          </div>
+      <section className="relative py-16 md:py-24 bg-[#00A2AA] overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/3 translate-y-1/3"></div>
+          <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-white rounded-full transform -translate-y-1/2"></div>
+        </div>
 
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="text-center">
-              <AnimatedCard delay={0} index={0}>
-                <h2 className="mb-8 text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
-                  Sua empresa pode está perdendo
-                  <br />
-                  <span className="text-teal-950 font-black">milhares de reais</span> todos os meses
-                </h2>
-              </AnimatedCard>
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center">
+            <AnimatedCard delay={0} index={0}>
+              <h2 className="mb-8 text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+                Sua empresa pode está perdendo
+                <br />
+                <span className="text-teal-950 font-black">milhares de reais</span> todos os meses
+              </h2>
+            </AnimatedCard>
 
-              <AnimatedCard delay={100} index={1}>
-                <p className="mb-12 text-lg md:text-xl text-white/90 leading-relaxed max-w-4xl mx-auto">
-                  Enquanto você paga caro para descartar resíduos, outras empresas precisam 
-                  comprar exatamente esses mesmos materiais como matéria-prima.
-                </p>
-              </AnimatedCard>
+            <AnimatedCard delay={100} index={1}>
+              <p className="mb-12 text-lg md:text-xl text-white/90 leading-relaxed max-w-4xl mx-auto">
+                Enquanto você paga caro para descartar resíduos, outras empresas precisam 
+                comprar exatamente esses mesmos materiais como matéria-prima.
+              </p>
+            </AnimatedCard>
 
               {/* Statistics Grid */}
               <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
@@ -385,8 +384,9 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </AnimatedCard>
+            </AnimatedCard>
 
+            <AnimatedCard delay={200} index={0}>
               <div className="mt-12">
                 <p className="text-lg md:text-xl text-white font-semibold mb-8">
                   Não deixe que sua concorrência saia na frente.
@@ -401,12 +401,10 @@ export default function Home() {
                   </svg>
                 </Link>
               </div>
-            </div>
+            </AnimatedCard>
           </div>
-        </section>
-      </AnimatedSection>
-
-      {/* Solution Section */}
+        </div>
+      </section>      {/* Solution Section */}
       <AnimatedSection id="solution-section" delay={50}>
         <section id="solution" className="py-20 md:py-32 bg-white">
           <div className="container mx-auto px-4">
