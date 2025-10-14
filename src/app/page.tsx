@@ -343,7 +343,7 @@ export default function Home() {
           <div className="text-center">
             <AnimatedCard delay={0} index={0}>
               <h2 className="mb-8 text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
-                Sua empresa pode está perdendo
+                Sua empresa pode estar perdendo
                 <br />
                 <span className="text-teal-950 font-black">milhares de reais</span> todos os meses
               </h2>
