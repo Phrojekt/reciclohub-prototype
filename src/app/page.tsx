@@ -258,40 +258,74 @@ export default function Home() {
           {/* Overlay preto com 80% de opacidade */}
           <div className="absolute inset-0 bg-black/60"></div>
 
-          <div className="container mx-auto px-4 text-center relative z-10">
-            <div className="animate-fade-in-up" style={{ animationDelay: '0.3s', animationFillMode: 'both' }}>
-              <h1 className="mb-6 text-3xl md:text-5xl font-extrabold text-white leading-tight">
-                Conectando Indústrias,
-                <br />
-                Transformando Resíduos em
-                <br />
-                Oportunidades
-              </h1>
-            </div>
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start lg:items-center min-h-[500px]">
+              
+              {/* Coluna Esquerda - Conteúdo Atual (7 colunas) */}
+              <div className="lg:col-span-7 text-center lg:text-left flex flex-col justify-center h-full py-8 lg:py-0">
+                <div className="animate-fade-in-up" style={{ animationDelay: '0.3s', animationFillMode: 'both' }}>
+                  <h1 className="mb-6 text-3xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight max-w-4xl lg:max-w-none">
+                    Conectando Indústrias,
+                    <br />
+                    Transformando Resíduos em Oportunidades
+                  </h1>
+                </div>
 
-            <div className="animate-fade-in-up" style={{ animationDelay: '0.6s', animationFillMode: 'both' }}>
-              <p className="mx-auto mb-10 max-w-2xl font-semibold text-sm md:text-lg text-white leading-relaxed">
-                Uma plataforma digital para troca e venda de resíduos industriais entre empresas, promovendo a
-                simbiose industrial e impulsionando a economia circular em Pernambuco.
-              </p>
-            </div>
+                <div className="animate-fade-in-up" style={{ animationDelay: '0.6s', animationFillMode: 'both' }}>
+                  <p className="mx-auto lg:mx-0 mb-10 max-w-3xl lg:max-w-2xl font-semibold text-sm md:text-lg lg:text-xl text-white leading-relaxed">
+                    Uma plataforma digital para troca e venda de resíduos industriais entre empresas, promovendo a
+                    simbiose industrial e impulsionando a economia circular em Pernambuco.
+                  </p>
+                </div>
 
-            <AnimatedCard delay={200} index={0}>
-              <div className="flex flex-col items-center justify-center space-y-4 md:flex-row md:space-x-4 md:space-y-0">
-                <Link
-                  href="/register"
-                  className="rounded-full bg-[#00A2AA] px-6 py-3 text-sm font-semibold md:text-base text-white hover:bg-[#00A2AA]/80"
-                >
-                  Cadastre sua empresa
-                </Link>
-                <Link
-                  href="#how-it-works"
-                  className="rounded-full border-2 border-white font-semibold bg-white px-6 py-3 text-sm md:text-base text-[#00A2AA] hover:bg-gray-100"
-                >
-                  Saiba como funciona
-                </Link>
+                <AnimatedCard delay={200} index={0}>
+                  <div className="flex flex-col items-center lg:items-start justify-start space-y-4 md:flex-row md:space-x-4 md:space-y-0 lg:justify-start">
+                    <Link
+                      href="/register"
+                      className="rounded-full bg-[#00A2AA] px-8 py-4 text-sm font-semibold md:text-base text-white hover:bg-[#00A2AA]/80 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      Cadastre sua empresa
+                    </Link>
+                    <Link
+                      href="#how-it-works"
+                      className="rounded-full border-2 border-white font-semibold bg-white px-8 py-4 text-sm md:text-base text-[#00A2AA] hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      Saiba como funciona
+                    </Link>
+                  </div>
+                </AnimatedCard>
               </div>
-            </AnimatedCard>
+
+              {/* Coluna Direita - Vídeo (5 colunas) */}
+              <div className="lg:col-span-5 flex flex-col items-center lg:items-start justify-center h-full py-8 lg:py-0">
+                <AnimatedCard delay={300} index={1}>
+                  <div className="w-full max-w-lg">
+                    <div className="bg-black rounded-lg shadow-2xl border-2 border-white/20 overflow-hidden">
+                      <iframe 
+                        width="100%" 
+                        height="350" 
+                        src="https://www.youtube.com/embed/FTND7_kbEPc?si=W00bf8jz7l7O2L5e" 
+                        title="YouTube video player" 
+                        frameBorder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        referrerPolicy="strict-origin-when-cross-origin" 
+                        allowFullScreen
+                        className="w-full"
+                        style={{
+                          minHeight: '350px',
+                          aspectRatio: '16/9',
+                          borderRadius: '8px'
+                        }}
+                      ></iframe>
+                    </div>
+                    <p className="text-center lg:text-left text-white/90 text-sm mt-4 font-medium">
+                      Saiba sobre
+                    </p>
+                  </div>
+                </AnimatedCard>
+              </div>
+
+            </div>
           </div>
         </section>
       </AnimatedSection>
